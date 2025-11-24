@@ -17,7 +17,7 @@ A lightweight Docusaurus plugin that exposes your markdown files as raw `.md` UR
 
 ## Live Example
 
-See it in action at [flynumber.com/docs](https://www.flynumber.com/docs/) - try clicking the "Open Markdown" dropdown next to any page title!
+See it in action at [flynumber.com/docs/](https://www.flynumber.com/docs/) - try clicking the "Open Markdown" dropdown next to any page title!
 
 ## Installation
 
