@@ -1,0 +1,46 @@
+{
+  "name": "docusaurus-markdown-source-plugin",
+  "version": "1.0.0",
+  "description": "A lightweight Docusaurus plugin that exposes your markdown files as raw .md URLs, perfect for LLMs and documentation tools",
+  "main": "index.js",
+  "keywords": [
+    "docusaurus",
+    "docusaurus-plugin",
+    "markdown",
+    "llm",
+    "documentation",
+    "ai",
+    "claude",
+    "chatgpt",
+    "markdown-source",
+    "raw-markdown"
+  ],
+  "author": "FlyNumber",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/FlyNumber/markdown_docusaurus_plugin.git"
+  },
+  "bugs": {
+    "url": "https://github.com/FlyNumber/markdown_docusaurus_plugin/issues"
+  },
+  "homepage": "https://github.com/FlyNumber/markdown_docusaurus_plugin#readme",
+  "peerDependencies": {
+    "@docusaurus/core": "^3.0.0",
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0"
+  },
+  "dependencies": {
+    "fs-extra": "^11.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "files": [
+    "index.js",
+    "src/",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ]
+}
