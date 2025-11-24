@@ -19,7 +19,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/FlyNumber/markdown_docusaurus_plugin.git"
+    "url": "git+https://github.com/FlyNumber/markdown_docusaurus_plugin.git"
   },
   "bugs": {
     "url": "https://github.com/FlyNumber/markdown_docusaurus_plugin/issues"
