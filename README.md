@@ -21,7 +21,7 @@ See it in action at [flynumber.com/docs/](https://www.flynumber.com/docs/) - try
 
 ## Screenshot
 
-![Open Markdown Dropdown](.github/images/button_screenshot.png)
+<img src=".github/images/button_screenshot.png" alt="Open Markdown Dropdown" width="400" />
 
 ## Installation
 
