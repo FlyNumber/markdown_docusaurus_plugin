@@ -365,26 +365,17 @@ You can customize the dropdown appearance by overriding these CSS classes in you
 
 ## Advanced Configuration
 
-### Using with Blog
+### Custom Paths and Blog Support
 
-To enable markdown source viewing for your blog:
+The plugin currently supports the default `/docs/` path out of the box.
 
-1. **Swizzle the components**: Use Docusaurus's swizzle feature to customize the bundled components:
-   ```bash
-   npm run swizzle docusaurus-markdown-source-plugin Root -- --eject
-   ```
+For blog support or custom paths, you can swizzle the components if needed:
 
-2. **Modify the swizzled files** to use blog paths instead of docs paths.
+```bash
+npm run swizzle docusaurus-markdown-source-plugin Root -- --eject
+```
 
-3. **Update plugin configuration**: You may need to extend the plugin to process blog files in addition to docs files.
-
-### Custom URL Pattern
-
-If you want a different URL pattern (e.g., `/raw/` instead of `.md`), you'll need to:
-
-1. Modify the plugin to copy files to a different path
-2. Update the component to construct URLs accordingly
-3. Configure server routing to serve files from the new location
+**Note:** Swizzling means you'll manually maintain these files and won't receive automatic updates. Native configuration support for custom paths is planned for a future release.
 
 ## Contributing
 
