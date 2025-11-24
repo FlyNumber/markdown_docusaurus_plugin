@@ -146,39 +146,6 @@ npm run serve
 
 Visit any docs page - you should see the "Open Markdown" dropdown in the header!
 
-## Migration from v1.x
-
-If you're upgrading from v1.x where you manually copied theme files:
-
-### 1. Remove Manually Copied Files
-
-```bash
-# Remove the manually copied theme file
-rm -rf src/theme/Root.js
-
-# Remove the manually copied component
-rm -rf src/components/MarkdownActionsDropdown/
-```
-
-### 2. Update the Plugin
-
-```bash
-npm update docusaurus-markdown-source-plugin
-```
-
-### 3. Keep Your Custom CSS
-
-The CSS styles in `src/css/custom.css` remain unchanged - no action needed.
-
-### 4. Rebuild
-
-```bash
-npm run build
-npm run serve
-```
-
-**Note:** The plugin now bundles all components internally. If you had customizations to the copied files, you'll need to use Docusaurus's [swizzling](https://docusaurus.io/docs/swizzling) feature to override them.
-
 ## How It Works
 
 1. **Build Time**: The plugin processes all markdown files in `docs/` during build:
