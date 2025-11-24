@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.1] - 2025-11-24
+
+### Documentation
+- Added button screenshot to README showing the dropdown UI
+- Removed unnecessary v1.x migration guide (no users existed before v2.0.0)
+- Simplified Advanced Configuration section
+- Removed complex swizzling instructions for blog support
+- Added honest note about customization trade-offs
+
+### Improved
+- Screenshot now displays at 400px width for better README viewing
+- Cleaner, more focused documentation
+- More transparent about current limitations and future plans
+
 ## [2.0.0] - 2025-11-24
 
 ### Breaking Changes
@@ -90,5 +104,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Compatible with Docusaurus v3.x
 - Uses React 18's createRoot API for component injection
 
+[2.0.1]: https://github.com/FlyNumber/markdown_docusaurus_plugin/releases/tag/v2.0.1
 [2.0.0]: https://github.com/FlyNumber/markdown_docusaurus_plugin/releases/tag/v2.0.0
 [1.0.0]: https://github.com/FlyNumber/markdown_docusaurus_plugin/releases/tag/v1.0.0

@@ -1,6 +1,6 @@
 {
   "name": "docusaurus-markdown-source-plugin",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "A lightweight Docusaurus plugin that exposes your markdown files as raw .md URLs, perfect for LLMs and documentation tools",
   "main": "index.js",
   "keywords": [
