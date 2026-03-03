@@ -18,3 +18,7 @@ Thumbs.db
 .idea/
 *.swp
 *.swo
+
+# Claude Code
+CLAUDE.md
+.claude/

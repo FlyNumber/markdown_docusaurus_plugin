@@ -50,10 +50,24 @@ function convertDetailsToMarkdown(content) {
   });
 }
 
+// Flatten nested Docusaurus route tree into a flat array
+function flattenRoutes(routes) {
+  return routes.flatMap(route => [
+    route,
+    ...(route.routes ? flattenRoutes(route.routes) : []),
+  ]);
+}
+
+// Strip baseUrl prefix from a URL path to get build-relative path
+function stripBaseUrl(urlPath, baseUrl) {
+  if (baseUrl !== '/' && urlPath.startsWith(baseUrl)) {
+    return urlPath.slice(baseUrl.length);
+  }
+  return urlPath.startsWith('/') ? urlPath.slice(1) : urlPath;
+}
+
 // Clean markdown content for raw display - remove MDX/Docusaurus-specific syntax
-function cleanMarkdownForDisplay(content, filepath) {
-  // Get the directory path for this file (relative to docs root)
-  const fileDir = filepath.replace(/[^/]*$/, ''); // Remove filename, keep directory
+function cleanMarkdownForDisplay(content, routeDir) {
 
   // 1. Strip YAML front matter (--- at start, content, then ---)
   content = content.replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n/, '');
@@ -98,13 +112,12 @@ function cleanMarkdownForDisplay(content, filepath) {
   // This runs AFTER Tabs/details conversion to preserve their content
   content = content.replace(/<[A-Z][a-zA-Z]*[\s\S]*?(?:\/>|<\/[A-Z][a-zA-Z]*>)/g, '');
 
-  // 10. Convert relative image paths to absolute paths from /docs/ root (Claude style)
+  // 10. Convert relative image paths to absolute paths using route URL directory
   // Matches: ![alt](./img/file.png) or ![alt](img/file.png)
   content = content.replace(
     /!\[([^\]]*)\]\((\.\/)?img\/([^)]+)\)/g,
     (match, alt, relPrefix, filename) => {
-      // Convert to absolute path: /docs/path/to/file/img/filename
-      return `![${alt}](/docs/${fileDir}img/${filename})`;
+      return `![${alt}](${routeDir}img/${filename})`;
     }
   );
 
@@ -112,72 +125,6 @@ function cleanMarkdownForDisplay(content, filepath) {
   content = content.replace(/^\s*\n/, '');
 
   return content;
-}
-
-// Recursively find all markdown files in a directory
-function findMarkdownFiles(dir, fileList = [], baseDir = dir) {
-  const files = fs.readdirSync(dir);
-
-  files.forEach((file) => {
-    const filePath = path.join(dir, file);
-    const stat = fs.statSync(filePath);
-
-    if (stat.isDirectory()) {
-      findMarkdownFiles(filePath, fileList, baseDir);
-    } else if (file.endsWith('.md')) {
-      // Store relative path from base directory
-      const relativePath = path.relative(baseDir, filePath);
-      fileList.push(relativePath);
-    }
-  });
-
-  return fileList;
-}
-
-// Copy image directories from docs to build
-async function copyImageDirectories(docsDir, buildDir) {
-  const imageDirs = [];
-
-  // Recursively find all 'img' directories in docs
-  function findImgDirs(dir, baseDir = dir) {
-    const files = fs.readdirSync(dir);
-
-    files.forEach((file) => {
-      const filePath = path.join(dir, file);
-      const stat = fs.statSync(filePath);
-
-      if (stat.isDirectory()) {
-        if (file === 'img') {
-          // Found an img directory, store its relative path
-          const relativePath = path.relative(baseDir, dir);
-          imageDirs.push({ source: filePath, relativePath });
-        } else {
-          // Continue searching in subdirectories
-          findImgDirs(filePath, baseDir);
-        }
-      }
-    });
-  }
-
-  // Find all img directories
-  findImgDirs(docsDir);
-
-  // Copy each img directory to build
-  let copiedCount = 0;
-  for (const { source, relativePath } of imageDirs) {
-    const destination = path.join(buildDir, relativePath, 'img');
-
-    try {
-      await fs.copy(source, destination);
-      const imageCount = fs.readdirSync(source).length;
-      console.log(`  ✓ Copied: ${relativePath}/img/ (${imageCount} images)`);
-      copiedCount++;
-    } catch (error) {
-      console.error(`  ✗ Failed to copy ${relativePath}/img/:`, error.message);
-    }
-  }
-
-  return copiedCount;
 }
 
 module.exports = function markdownSourcePlugin(context, options) {
@@ -189,47 +136,76 @@ module.exports = function markdownSourcePlugin(context, options) {
       return path.resolve(__dirname, './theme');
     },
 
-    async postBuild({ outDir }) {
-      const docsDir = path.join(context.siteDir, 'docs');
-      const buildDir = outDir;
+    async postBuild({ outDir, routes, baseUrl }) {
+      console.log('[markdown-source-plugin] Processing markdown source files...');
 
-      console.log('[markdown-source-plugin] Copying markdown source files...');
+      // Flatten nested routes and filter to markdown sources
+      const allRoutes = flattenRoutes(routes);
+      const mdRoutes = allRoutes.filter(route => {
+        const src = route.metadata?.sourceFilePath;
+        return src && (src.endsWith('.md') || src.endsWith('.mdx'));
+      });
 
-      // Find all markdown files in docs directory
-      const mdFiles = findMarkdownFiles(docsDir);
+      console.log(`[markdown-source-plugin] Found ${mdRoutes.length} markdown routes`);
 
       let copiedCount = 0;
+      const imgDirsToCopy = new Map(); // sourceImgDir -> destImgDir
 
-      // Process each markdown file to build directory
-      for (const mdFile of mdFiles) {
-        const sourcePath = path.join(docsDir, mdFile);
-        const destPath = path.join(buildDir, mdFile);
+      for (const route of mdRoutes) {
+        const sourceRelPath = route.metadata.sourceFilePath;
+        const sourcePath = path.join(context.siteDir, sourceRelPath);
+
+        // Get route URL directory for image path rewriting
+        const routeDir = route.path.endsWith('/')
+          ? route.path
+          : route.path.replace(/[^/]+$/, '');
+
+        // Construct the fetch URL the client dropdown will request
+        const fetchUrl = route.path.endsWith('/')
+          ? route.path + 'intro.md'
+          : route.path + '.md';
+
+        // Strip baseUrl to get build-relative path
+        const buildRelPath = stripBaseUrl(fetchUrl, baseUrl);
+        const destPath = path.join(outDir, buildRelPath);
 
         try {
-          // Ensure destination directory exists
           await fs.ensureDir(path.dirname(destPath));
-
-          // Read the markdown file
           const content = await fs.readFile(sourcePath, 'utf8');
-
-          // Clean markdown for raw display
-          const cleanedContent = cleanMarkdownForDisplay(content, mdFile);
-
-          // Write the cleaned content
+          const cleanedContent = cleanMarkdownForDisplay(content, routeDir);
           await fs.writeFile(destPath, cleanedContent, 'utf8');
           copiedCount++;
-
-          console.log(`  ✓ Processed: ${mdFile}`);
+          console.log(`  ✓ Processed: ${sourceRelPath} → ${buildRelPath}`);
         } catch (error) {
-          console.error(`  ✗ Failed to process ${mdFile}:`, error.message);
+          console.error(`  ✗ Failed to process ${sourceRelPath}:`, error.message);
+        }
+
+        // Track img directories near this source file for copying
+        const sourceDir = path.dirname(sourcePath);
+        const imgDir = path.join(sourceDir, 'img');
+        if (!imgDirsToCopy.has(imgDir)) {
+          const imgOutRelDir = stripBaseUrl(routeDir, baseUrl);
+          imgDirsToCopy.set(imgDir, path.join(outDir, imgOutRelDir, 'img'));
         }
       }
 
-      console.log(`[markdown-source-plugin] Successfully copied ${copiedCount} markdown files`);
+      console.log(`[markdown-source-plugin] Successfully processed ${copiedCount} markdown files`);
 
       // Copy image directories
       console.log('[markdown-source-plugin] Copying image directories...');
-      const imgDirCount = await copyImageDirectories(docsDir, buildDir);
+      let imgDirCount = 0;
+      for (const [source, dest] of imgDirsToCopy) {
+        if (await fs.pathExists(source)) {
+          try {
+            await fs.copy(source, dest);
+            const imageCount = fs.readdirSync(source).length;
+            console.log(`  ✓ Copied: ${path.relative(context.siteDir, source)} (${imageCount} files)`);
+            imgDirCount++;
+          } catch (error) {
+            console.error(`  ✗ Failed to copy ${path.relative(context.siteDir, source)}:`, error.message);
+          }
+        }
+      }
       console.log(`[markdown-source-plugin] Successfully copied ${imgDirCount} image directories`);
     },
   };
