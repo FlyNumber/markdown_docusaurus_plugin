@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 
-export default function MarkdownActionsDropdown() {
+export default function MarkdownActionsDropdown({ docsRoot = '/docs' }) {
   const [copied, setCopied] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
@@ -9,7 +9,7 @@ export default function MarkdownActionsDropdown() {
   const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
 
   // Only show on docs pages (not blog, homepage, etc.)
-  const isDocsPage = currentPath.startsWith('/docs/');
+  const isDocsPage = currentPath.startsWith(docsRoot + '/');
 
   // Handle click outside to close dropdown
   useEffect(() => {

@@ -51,7 +51,7 @@ function convertDetailsToMarkdown(content) {
 }
 
 // Clean markdown content for raw display - remove MDX/Docusaurus-specific syntax
-function cleanMarkdownForDisplay(content, filepath) {
+function cleanMarkdownForDisplay(content, filepath, docsRoot) {
   // Get the directory path for this file (relative to docs root)
   const fileDir = filepath.replace(/[^/]*$/, ''); // Remove filename, keep directory
 
@@ -98,13 +98,13 @@ function cleanMarkdownForDisplay(content, filepath) {
   // This runs AFTER Tabs/details conversion to preserve their content
   content = content.replace(/<[A-Z][a-zA-Z]*[\s\S]*?(?:\/>|<\/[A-Z][a-zA-Z]*>)/g, '');
 
-  // 10. Convert relative image paths to absolute paths from /docs/ root (Claude style)
+  // 10. Convert relative image paths to absolute paths from docs root (Claude style)
   // Matches: ![alt](./img/file.png) or ![alt](img/file.png)
   content = content.replace(
     /!\[([^\]]*)\]\((\.\/)?img\/([^)]+)\)/g,
     (match, alt, relPrefix, filename) => {
       // Convert to absolute path: /docs/path/to/file/img/filename
-      return `![${alt}](/docs/${fileDir}img/${filename})`;
+      return `![${alt}](${docsRoot}/${fileDir}img/${filename})`;
     }
   );
 
@@ -181,12 +181,24 @@ async function copyImageDirectories(docsDir, buildDir) {
 }
 
 module.exports = function markdownSourcePlugin(context, options) {
+  // Normalize docsRoot: ensure leading slash, no trailing slash
+  let docsRoot = (options.docsRoot || '/docs').replace(/\/+$/, '');
+  if (!docsRoot.startsWith('/')) {
+    docsRoot = '/' + docsRoot;
+  }
+
   return {
     name: 'markdown-source-plugin',
 
     // Provide theme components from the plugin (eliminates need for manual copying)
     getThemePath() {
       return path.resolve(__dirname, './theme');
+    },
+
+    // Expose docsRoot to theme components via global data
+    async contentLoaded({ actions }) {
+      const { setGlobalData } = actions;
+      setGlobalData({ docsRoot });
     },
 
     async postBuild({ outDir }) {
@@ -213,7 +225,7 @@ module.exports = function markdownSourcePlugin(context, options) {
           const content = await fs.readFile(sourcePath, 'utf8');
 
           // Clean markdown for raw display
-          const cleanedContent = cleanMarkdownForDisplay(content, mdFile);
+          const cleanedContent = cleanMarkdownForDisplay(content, mdFile, docsRoot);
 
           // Write the cleaned content
           await fs.writeFile(destPath, cleanedContent, 'utf8');

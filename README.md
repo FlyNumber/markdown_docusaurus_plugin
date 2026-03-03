@@ -325,7 +325,7 @@ You can customize the dropdown appearance by overriding these CSS classes in you
 
 3. **Check browser console**: Look for any errors that might indicate component loading issues.
 
-4. **Verify path configuration**: The default path is `/docs/`. If your docs use a different path (e.g., `/documentation/`), you may need to swizzle the component and customize it.
+4. **Verify path configuration**: The default path is `/docs/`. If your docs use a different path (e.g., `/documentation/`), set the `docsRoot` option in your plugin config (see [Advanced Configuration](#custom-docs-root-path)).
 
 5. **Check DOM structure**: Open DevTools and run:
    ```javascript
@@ -369,17 +369,29 @@ You can customize the dropdown appearance by overriding these CSS classes in you
 
 ## Advanced Configuration
 
-### Custom Paths and Blog Support
+### Custom Docs Root Path
 
-The plugin currently supports the default `/docs/` path out of the box.
+By default, the plugin targets the `/docs/` path. If your Docusaurus site uses a custom `routeBasePath` for the docs plugin, you can configure the root path with the `docsRoot` option:
 
-For blog support or custom paths, you can swizzle the components if needed:
+```javascript
+module.exports = {
+  plugins: [
+    ['docusaurus-markdown-source-plugin', { docsRoot: '/documentation' }],
+  ],
+};
+```
+
+The option accepts flexible input (`docs`, `/docs`, `/docs/` all normalize to `/docs`). If omitted, it defaults to `/docs`.
+
+### Blog Support
+
+For blog support or other advanced customization, you can swizzle the components:
 
 ```bash
 npm run swizzle docusaurus-markdown-source-plugin Root -- --eject
 ```
 
-**Note:** Swizzling means you'll manually maintain these files and won't receive automatic updates. Native configuration support for custom paths is planned for a future release.
+**Note:** Swizzling means you'll manually maintain these files and won't receive automatic updates.
 
 ## Contributing
 

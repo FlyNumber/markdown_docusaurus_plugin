@@ -1,11 +1,13 @@
 // theme/Root.js - Plugin-provided theme component
 import React, { useEffect } from 'react';
 import { useLocation } from '@docusaurus/router';
+import { usePluginData } from '@docusaurus/useGlobalData';
 import { createRoot } from 'react-dom/client';
 import MarkdownActionsDropdown from '../components/MarkdownActionsDropdown';
 
 export default function Root({ children }) {
   const { hash, pathname } = useLocation();
+  const { docsRoot } = usePluginData('markdown-source-plugin');
 
   useEffect(() => {
     if (hash) {
@@ -40,7 +42,7 @@ export default function Root({ children }) {
   useEffect(() => {
     const injectDropdown = () => {
       // Only inject on docs pages
-      if (!pathname.startsWith('/docs/')) return;
+      if (!pathname.startsWith(docsRoot + '/')) return;
 
       const articleHeader = document.querySelector('article .markdown header');
       if (!articleHeader) return;
@@ -57,7 +59,7 @@ export default function Root({ children }) {
 
       // Render React component into container
       const root = createRoot(container);
-      root.render(<MarkdownActionsDropdown />);
+      root.render(<MarkdownActionsDropdown docsRoot={docsRoot} />);
     };
 
     // Try to inject after a short delay to ensure DOM is ready
