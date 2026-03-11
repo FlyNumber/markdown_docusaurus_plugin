@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.0] - 2026-03-11
+
+### Added
+- **Configurable `docsPath` option** for sites that don't host docs under `/docs/` (fixes #3)
+  - Default: `'/docs/'` (no behavior change for existing users)
+  - Example: `['docusaurus-markdown-source-plugin', { docsPath: '/' }]`
+  - Supports docs-only subdomains, custom route base paths, etc.
+- `contentLoaded` hook exposing plugin options to theme components via Docusaurus global data
+
+### Changed
+- Runtime components now read `docsPath` from plugin global data instead of hardcoding `/docs/`
+- Updated README: replaced swizzle instructions with `docsPath` configuration docs
+
 ## [2.1.0] - 2026-03-03
 
 ### Changed
@@ -117,6 +130,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Compatible with Docusaurus v3.x
 - Uses React 18's createRoot API for component injection
 
+[2.2.0]: https://github.com/FlyNumber/markdown_docusaurus_plugin/releases/tag/v2.2.0
 [2.1.0]: https://github.com/FlyNumber/markdown_docusaurus_plugin/releases/tag/v2.1.0
 [2.0.1]: https://github.com/FlyNumber/markdown_docusaurus_plugin/releases/tag/v2.0.1
 [2.0.0]: https://github.com/FlyNumber/markdown_docusaurus_plugin/releases/tag/v2.0.0

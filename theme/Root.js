@@ -2,10 +2,12 @@
 import React, { useEffect } from 'react';
 import { useLocation } from '@docusaurus/router';
 import { createRoot } from 'react-dom/client';
+import { usePluginData } from '@docusaurus/useGlobalData';
 import MarkdownActionsDropdown from '../components/MarkdownActionsDropdown';
 
 export default function Root({ children }) {
   const { hash, pathname } = useLocation();
+  const { docsPath } = usePluginData('markdown-source-plugin');
 
   useEffect(() => {
     if (hash) {
@@ -40,7 +42,8 @@ export default function Root({ children }) {
   useEffect(() => {
     const injectDropdown = () => {
       // Only inject on docs pages
-      if (!pathname.startsWith('/docs/')) return;
+      // Match docsPath prefix or exact path (handles trailingSlash: false)
+      if (docsPath !== '/' && !pathname.startsWith(docsPath) && pathname !== docsPath.slice(0, -1)) return;
 
       const articleHeader = document.querySelector('article .markdown header');
       if (!articleHeader) return;
@@ -61,11 +64,13 @@ export default function Root({ children }) {
     };
 
     // Try to inject after a short delay to ensure DOM is ready
-    const timeouts = [0, 100, 300];
-    timeouts.forEach(delay => {
-      setTimeout(injectDropdown, delay);
-    });
-  }, [pathname]);
+    const delays = [0, 100, 300];
+    const timers = delays.map(delay => setTimeout(injectDropdown, delay));
+
+    return () => {
+      timers.forEach(t => clearTimeout(t));
+    };
+  }, [pathname, docsPath]);
 
   return <>{children}</>;
 }

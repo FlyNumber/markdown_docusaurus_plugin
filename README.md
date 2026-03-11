@@ -327,7 +327,7 @@ You can customize the dropdown appearance by overriding these CSS classes in you
 
 3. **Check browser console**: Look for any errors that might indicate component loading issues.
 
-4. **Verify path configuration**: The default path is `/docs/`. If your docs use a different path (e.g., `/documentation/`), you may need to swizzle the component and customize it.
+4. **Verify path configuration**: The default path is `/docs/`. If your docs use a different path, configure the `docsPath` option (see Advanced Configuration).
 
 5. **Check DOM structure**: Open DevTools and run:
    ```javascript
@@ -379,13 +379,27 @@ You can customize the dropdown appearance by overriding these CSS classes in you
 
 ### Custom Docs Path
 
-The build pipeline automatically supports custom `routeBasePath` configurations — it reads route metadata directly from Docusaurus, so no plugin config is needed for the build step.
+By default, the dropdown appears on pages under `/docs/`. If your docs use a different URL prefix (e.g., you've set `routeBasePath: '/'` for a docs-only subdomain), configure the `docsPath` option:
 
-The UI dropdown currently targets `/docs/` pages by default. If your docs use a different URL path (e.g., `/documentation/`), you can swizzle the component to customize it:
-
-```bash
-npm run swizzle docusaurus-markdown-source-plugin Root -- --eject
+```javascript
+module.exports = {
+  plugins: [
+    ['docusaurus-markdown-source-plugin', {
+      docsPath: '/',  // Show dropdown on all pages (docs-only site)
+    }],
+  ],
+};
 ```
+
+Common configurations:
+
+| Setup | `docsPath` value |
+|-------|-----------------|
+| Default Docusaurus | `'/docs/'` (default) |
+| Docs-only subdomain (`docs.example.com`) | `'/'` |
+| Custom path (`/documentation/`) | `'/documentation/'` |
+
+> **Note:** When `docsPath` is `'/'`, the dropdown appears on any page that has an article header. This is intended for docs-only sites. Sites with both docs and blog at root may see the dropdown on blog pages too.
 
 ### Blog Support
 
@@ -394,8 +408,6 @@ For blog support, swizzle the components and modify the path detection logic:
 ```bash
 npm run swizzle docusaurus-markdown-source-plugin Root -- --eject
 ```
-
-**Note:** Swizzling means you'll manually maintain these files and won't receive automatic updates.
 
 ## Contributing
 

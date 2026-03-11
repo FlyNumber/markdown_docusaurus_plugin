@@ -127,13 +127,29 @@ function cleanMarkdownForDisplay(content, routeDir) {
   return content;
 }
 
-module.exports = function markdownSourcePlugin(context, options) {
+// Normalize docsPath option to a consistent format for pathname matching
+// Accepts: '/docs/', '/docs', 'docs', '/' → returns '/docs/' or '/'
+function normalizeDocsPath(input) {
+  if (!input || typeof input !== 'string') return '/docs/';
+  if (input === '/') return '/';
+  let p = input;
+  if (!p.startsWith('/')) p = '/' + p;
+  if (!p.endsWith('/')) p += '/';
+  return p;
+}
+
+module.exports = function markdownSourcePlugin(context, options = {}) {
   return {
     name: 'markdown-source-plugin',
 
     // Provide theme components from the plugin (eliminates need for manual copying)
     getThemePath() {
       return path.resolve(__dirname, './theme');
+    },
+
+    async contentLoaded({ actions }) {
+      const docsPath = normalizeDocsPath(options.docsPath || '/docs/');
+      actions.setGlobalData({ docsPath });
     },
 
     async postBuild({ outDir, routes, baseUrl }) {

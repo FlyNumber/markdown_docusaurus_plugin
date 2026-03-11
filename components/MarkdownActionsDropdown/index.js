@@ -5,11 +5,8 @@ export default function MarkdownActionsDropdown() {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
 
-  // Get pathname from window.location
+  // Get pathname from window.location for URL construction
   const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
-
-  // Only show on docs pages (not blog, homepage, etc.)
-  const isDocsPage = currentPath.startsWith('/docs/');
 
   // Handle click outside to close dropdown
   useEffect(() => {
@@ -32,10 +29,6 @@ export default function MarkdownActionsDropdown() {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [isOpen]);
-
-  if (!isDocsPage) {
-    return null;
-  }
 
   // Construct the .md URL (handles directory indexes like /docs/ -> /docs/intro.md)
   const markdownUrl = currentPath.endsWith('/')
