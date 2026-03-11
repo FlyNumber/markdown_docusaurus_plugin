@@ -4,9 +4,14 @@ export default function MarkdownActionsDropdown() {
   const [copied, setCopied] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
+  // Pathname must be read only after mount to avoid SSR/client hydration mismatch (React 19)
+  const [currentPath, setCurrentPath] = useState('');
 
-  // Get pathname from window.location
-  const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
+  useEffect(() => {
+    setCurrentPath(typeof window !== 'undefined' ? window.location.pathname : '');
+  }, []);
+
+
 
   // Only show on docs pages (not blog, homepage, etc.)
   const isDocsPage = currentPath.startsWith('/docs/');
