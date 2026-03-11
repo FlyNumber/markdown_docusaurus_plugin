@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.1] - 2026-03-11
+
+### Fixed
+- **Faster dropdown appearance on cold page load** — replaced fixed retry timeouts with MutationObserver that injects the button the instant the article header appears after hydration
+- Properly unmount React root on cleanup to prevent memory leaks
+
 ## [2.2.0] - 2026-03-11
 
 ### Added
@@ -130,6 +136,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Compatible with Docusaurus v3.x
 - Uses React 18's createRoot API for component injection
 
+[2.2.1]: https://github.com/FlyNumber/markdown_docusaurus_plugin/releases/tag/v2.2.1
 [2.2.0]: https://github.com/FlyNumber/markdown_docusaurus_plugin/releases/tag/v2.2.0
 [2.1.0]: https://github.com/FlyNumber/markdown_docusaurus_plugin/releases/tag/v2.1.0
 [2.0.1]: https://github.com/FlyNumber/markdown_docusaurus_plugin/releases/tag/v2.0.1
