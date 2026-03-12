@@ -9,6 +9,7 @@ export default function Root({ children }) {
   const { hash, pathname } = useLocation();
   const { docsPath } = usePluginData('markdown-source-plugin');
   const dropdownRootRef = useRef(null);
+  const containerRef = useRef(null);
 
   useEffect(() => {
     if (hash) {
@@ -53,20 +54,29 @@ export default function Root({ children }) {
         dropdownRootRef.current.unmount();
         dropdownRootRef.current = null;
       }
-      const container = document.querySelector('.markdown-actions-container');
-      if (container) container.remove();
+      if (containerRef.current) {
+        containerRef.current.remove();
+        containerRef.current = null;
+      }
     };
 
     const injectDropdown = () => {
       const articleHeader = document.querySelector('article .markdown header');
       if (!articleHeader) return false;
 
-      // Check if already injected
+      // Check if already injected in this header
       if (articleHeader.querySelector('.markdown-actions-container')) return true;
+
+      // Unmount previous root if it exists (e.g., was on stale DOM that got swapped)
+      if (dropdownRootRef.current) {
+        dropdownRootRef.current.unmount();
+        dropdownRootRef.current = null;
+      }
 
       const container = document.createElement('div');
       container.className = 'markdown-actions-container';
       articleHeader.appendChild(container);
+      containerRef.current = container;
 
       const root = createRoot(container);
       root.render(<MarkdownActionsDropdown />);
@@ -75,20 +85,21 @@ export default function Root({ children }) {
       return true;
     };
 
-    // Fast path: header already in DOM (client-side navigation)
-    if (injectDropdown()) {
-      return cleanup;
-    }
+    // Try immediate injection (works when content is already rendered)
+    injectDropdown();
 
-    // Cold-load path: observe DOM until header appears after hydration
-    const target = document.querySelector('main') || document.body;
+    // Always observe DOM changes — on client-side navigation, Docusaurus
+    // uses startTransition so the old page DOM may still be present when
+    // this effect runs. The observer catches the real content swap and
+    // re-injects if the dropdown was lost with the stale DOM.
     const observer = new MutationObserver(() => {
-      if (injectDropdown()) {
-        observer.disconnect();
+      const header = document.querySelector('article .markdown header');
+      if (header && !header.querySelector('.markdown-actions-container')) {
+        injectDropdown();
       }
     });
 
-    observer.observe(target, { childList: true, subtree: true });
+    observer.observe(document.body, { childList: true, subtree: true });
 
     return () => {
       observer.disconnect();

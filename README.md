@@ -321,6 +321,8 @@ You can customize the dropdown appearance by overriding these CSS classes in you
 
 ### Dropdown Not Appearing
 
+> **Note:** The dropdown only appears on **doc content pages** — not on category/index pages (e.g., `/docs/category/...`). Category pages don't contain markdown content, so there's no markdown to expose.
+
 1. **Check plugin installation**: Ensure the plugin is in your `docusaurus.config.js` plugins array.
 
 2. **Rebuild your site**: After installing, run `npm run build` to ensure the plugin is loaded.

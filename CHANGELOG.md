@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.2] - 2026-03-12
+
+### Fixed
+- **Dropdown not appearing on client-side navigation** — the MutationObserver introduced in 2.2.1 short-circuited when it found stale DOM during React transitions, causing the button to vanish after page swaps. Observer now stays active to catch content swaps and re-inject reliably.
+- Track exact container instance via ref instead of global querySelector to prevent cleanup collisions during page transitions
+- Observe `document.body` instead of `<main>` element to survive layout swaps during navigation
+- Unmount stale React roots before creating new ones to prevent memory leaks
+
+### Documentation
+- Added note clarifying the dropdown only appears on doc content pages, not category/index pages
+
 ## [2.2.1] - 2026-03-11
 
 ### Fixed
@@ -136,6 +147,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Compatible with Docusaurus v3.x
 - Uses React 18's createRoot API for component injection
 
+[2.2.2]: https://github.com/FlyNumber/markdown_docusaurus_plugin/releases/tag/v2.2.2
 [2.2.1]: https://github.com/FlyNumber/markdown_docusaurus_plugin/releases/tag/v2.2.1
 [2.2.0]: https://github.com/FlyNumber/markdown_docusaurus_plugin/releases/tag/v2.2.0
 [2.1.0]: https://github.com/FlyNumber/markdown_docusaurus_plugin/releases/tag/v2.1.0
