@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Documentation
 - Added note clarifying the dropdown only appears on doc content pages, not category/index pages
+- Updated peer dependencies to support React 19 (`^18.0.0 || ^19.0.0`) — re-applied from #5
 
 ## [2.2.1] - 2026-03-11
 
