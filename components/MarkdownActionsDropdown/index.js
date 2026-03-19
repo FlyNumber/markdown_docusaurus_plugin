@@ -72,9 +72,10 @@ export default function MarkdownActionsDropdown() {
         onClick={() => setIsOpen(!isOpen)}
         aria-haspopup="true"
         aria-expanded={isOpen}
+        style={{display: 'inline-flex', alignItems: 'center'}}
       >
         Open Markdown
-        <svg width="14" height="14" viewBox="0 0 16 16" style={{marginLeft: '4px'}}>
+        <svg width="14" height="14" viewBox="0 0 16 16" style={{marginLeft: '6px'}}>
           <path fill="currentColor" d="M4.427 6.427l3.396 3.396a.25.25 0 00.354 0l3.396-3.396a.25.25 0 00-.177-.427H4.604a.25.25 0 00-.177.427z"/>
         </svg>
       </button>

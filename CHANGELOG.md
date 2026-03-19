@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.4] - 2026-03-19
+
+### Fixed
+- **Dropdown chevron not vertically centered** — added inline-flex alignment to the button so the SVG chevron centers with the text across all browsers (fixes #2)
+- Increased chevron spacing from 4px to 6px for better visual balance
+
 ## [2.2.3] - 2026-03-12
 
 ### Fixed
@@ -148,6 +154,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Compatible with Docusaurus v3.x
 - Uses React 18's createRoot API for component injection
 
+[2.2.4]: https://github.com/FlyNumber/markdown_docusaurus_plugin/releases/tag/v2.2.4
 [2.2.3]: https://github.com/FlyNumber/markdown_docusaurus_plugin/releases/tag/v2.2.3
 [2.2.2]: https://github.com/FlyNumber/markdown_docusaurus_plugin/releases/tag/v2.2.2
 [2.2.1]: https://github.com/FlyNumber/markdown_docusaurus_plugin/releases/tag/v2.2.1
