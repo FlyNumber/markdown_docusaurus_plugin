@@ -2,6 +2,7 @@ const fs = require('fs-extra');
 const path = require('path');
 const { getMarkdownUrl } = require('./lib/markdown-path');
 const { cleanMarkdownForDisplay } = require('./lib/clean-markdown');
+const { recordImgMapping } = require('./lib/img-mapping');
 
 /**
  * Docusaurus plugin to copy raw markdown files to build output
@@ -62,7 +63,7 @@ module.exports = function markdownSourcePlugin(context, options = {}) {
       console.log(`[markdown-source-plugin] Found ${mdRoutes.length} markdown routes`);
 
       let copiedCount = 0;
-      const imgDirsToCopy = new Map(); // sourceImgDir -> destImgDir
+      const imgDirsToCopy = new Map(); // sourceImgDir -> Set<destImgDir>
 
       for (const route of mdRoutes) {
         const sourceRelPath = route.metadata.sourceFilePath;
@@ -91,29 +92,30 @@ module.exports = function markdownSourcePlugin(context, options = {}) {
           console.error(`  ✗ Failed to process ${sourceRelPath}:`, error.message);
         }
 
-        // Track img directories near this source file for copying
+        // Track img directories near this source file for copying. A single source
+        // dir may need to be copied to multiple destinations when sibling docs in the
+        // same dir are routed to different URL spaces (e.g. via slug:).
         const sourceDir = path.dirname(sourcePath);
         const imgDir = path.join(sourceDir, 'img');
-        if (!imgDirsToCopy.has(imgDir)) {
-          const imgOutRelDir = stripBaseUrl(routeDir, baseUrl);
-          imgDirsToCopy.set(imgDir, path.join(outDir, imgOutRelDir, 'img'));
-        }
+        const imgOutRelDir = stripBaseUrl(routeDir, baseUrl);
+        recordImgMapping(imgDirsToCopy, imgDir, path.join(outDir, imgOutRelDir, 'img'));
       }
 
       console.log(`[markdown-source-plugin] Successfully processed ${copiedCount} markdown files`);
 
-      // Copy image directories
+      // Copy image directories. Each source dir may have multiple destinations.
       console.log('[markdown-source-plugin] Copying image directories...');
       let imgDirCount = 0;
-      for (const [source, dest] of imgDirsToCopy) {
-        if (await fs.pathExists(source)) {
+      for (const [source, dests] of imgDirsToCopy) {
+        if (!(await fs.pathExists(source))) continue;
+        const imageCount = fs.readdirSync(source).length;
+        for (const dest of dests) {
           try {
             await fs.copy(source, dest);
-            const imageCount = fs.readdirSync(source).length;
-            console.log(`  ✓ Copied: ${path.relative(context.siteDir, source)} (${imageCount} files)`);
+            console.log(`  ✓ Copied: ${path.relative(context.siteDir, source)} → ${path.relative(outDir, dest)} (${imageCount} files)`);
             imgDirCount++;
           } catch (error) {
-            console.error(`  ✗ Failed to copy ${path.relative(context.siteDir, source)}:`, error.message);
+            console.error(`  ✗ Failed to copy ${path.relative(context.siteDir, source)} → ${path.relative(outDir, dest)}:`, error.message);
           }
         }
       }
