@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.5] - 2026-05-03
+
+### Fixed
+- **`intro.md` collision on `slug: '/'` routes** — sites with both `docs/intro.md` and a doc routed to `/docs/` had their build output collide on `intro.md`, with the second route silently overwriting the first. Trailing-slash routes now resolve to `index.md` in both the build writer and the dropdown URL.
+- **Code fences corrupted by MDX/Docusaurus transforms** — `cleanMarkdownForDisplay` ran every regex over raw content with no fence awareness, so docs demonstrating Docusaurus syntax inside fenced code blocks had imports stripped, `<Tabs>` blocks rewritten, and components removed from their own examples. Transforms now skip backtick and tilde fences (length ≥ 3, ≤3 leading spaces, supports CRLF and unclosed fences) via a placeholder-based protection that also handles legitimate `<Tabs>` blocks containing fenced code.
+- **Image directories only copied to the first route's destination** — when sibling docs in the same source dir routed to different URL spaces (e.g. via `slug:`), `imgDirsToCopy` locked the destination from the first route, leaving silent broken images on other routes. Switched to `Map<src, Set<dest>>` so each source dir is copied to every destination it serves.
+- **`<TabItem>` and YouTube iframe regexes rejected valid attribute orders** — `<TabItem>` required `value` before `label`; reverse-order items silently emptied the entire `<Tabs>` block. YouTube iframe required `src` before `title`. Both now capture the attribute string and parse fields independently with single- or double-quote support. If no `<TabItem>`s parse, the original `<Tabs>` block is preserved instead of being silently deleted.
+- **Multi-line and side-effect imports survived stripping** — the import stripper used `.*?` which cannot cross newlines, so `import {\n  Foo\n} from './x';` survived. Side-effect imports like `import './x.css';` weren't matched. Both are now removed.
+- **Component scrubber left orphan close tags** — the closing-tag alternation matched any uppercase tag, so siblings like `<Outer><Inner>x</Inner></Outer>` left `</Outer>` orphaned. Added a backreference so paired tags must share a name. Deeply nested same-name components remain a known regex limitation.
+- **`<details>` regex was too strict and destroyed body whitespace** — rejected attributes on the opening tag (`<details open>`), rejected mixed-content summaries, and the body cleanup trimmed every line and dropped blanks, breaking 4-space indents in code and intentional blank-line separators. Now allows attrs on `<details>`/`<summary>`, strips inline tags from the summary text, and only trims outer blank padding from the body.
+- **`Root.js` `decodeURIComponent` crash on malformed hash** — a URL with malformed percent encoding like `#%foo` threw `URIError` synchronously and silently lost the anchor scroll. Now wrapped in a `decodeHashSafely` helper that returns null and short-circuits the scroll attempt.
+- **`Root.js` scroll-to-anchor timer and listener leaks** — four `setTimeout`s and a `window 'load'` listener were never cleaned up. Quickly clicking different hash links piled up timers, and stale timers could scroll the page out from under the user after navigation. The effect now returns a cleanup that clears every scheduled timer and removes the listener.
+- **Dropdown copy-reset timer auto-closed the menu** — the 2 s reset timer unconditionally called `setIsOpen(false)`, so a user who reopened the dropdown during the cooldown saw it close again with no input. The timer was also never cleared on unmount or before a new copy. Now tracked in a `useRef`, cleared on unmount and at the top of each new copy, and only resets the "Copied!" label.
+
+### Internal
+- Added a `node --test` based test suite (zero new dependencies). Run with `npm test`.
+- Extracted `cleanMarkdownForDisplay`, `getMarkdownUrl`, fence-protection, image-mapping, and hash-decoding into focused `lib/` modules for testability.
+
 ## [2.2.4] - 2026-03-19
 
 ### Fixed
@@ -154,6 +172,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Compatible with Docusaurus v3.x
 - Uses React 18's createRoot API for component injection
 
+[2.2.5]: https://github.com/FlyNumber/markdown_docusaurus_plugin/releases/tag/v2.2.5
 [2.2.4]: https://github.com/FlyNumber/markdown_docusaurus_plugin/releases/tag/v2.2.4
 [2.2.3]: https://github.com/FlyNumber/markdown_docusaurus_plugin/releases/tag/v2.2.3
 [2.2.2]: https://github.com/FlyNumber/markdown_docusaurus_plugin/releases/tag/v2.2.2
