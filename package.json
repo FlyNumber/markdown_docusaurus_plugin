@@ -3,6 +3,9 @@
   "version": "2.2.4",
   "description": "A lightweight Docusaurus plugin that exposes your markdown files as raw .md URLs, perfect for LLMs and documentation tools",
   "main": "index.js",
+  "scripts": {
+    "test": "node --test test/*.test.js"
+  },
   "keywords": [
     "docusaurus",
     "docusaurus-plugin",
@@ -38,6 +41,7 @@
   },
   "files": [
     "index.js",
+    "lib/",
     "theme/",
     "components/",
     "README.md",

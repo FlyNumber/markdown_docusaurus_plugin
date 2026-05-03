@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { getMarkdownUrl } from '../../lib/markdown-path';
 
 export default function MarkdownActionsDropdown() {
   const [copied, setCopied] = useState(false);
@@ -30,10 +31,7 @@ export default function MarkdownActionsDropdown() {
     };
   }, [isOpen]);
 
-  // Construct the .md URL (handles directory indexes like /docs/ -> /docs/intro.md)
-  const markdownUrl = currentPath.endsWith('/')
-    ? `${currentPath}intro.md`
-    : `${currentPath}.md`;
+  const markdownUrl = getMarkdownUrl(currentPath);
 
   // Handle opening markdown in new tab
   const handleOpenMarkdown = () => {
