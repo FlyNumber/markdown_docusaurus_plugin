@@ -1,55 +1,12 @@
 const fs = require('fs-extra');
 const path = require('path');
 const { getMarkdownUrl } = require('./lib/markdown-path');
+const { cleanMarkdownForDisplay } = require('./lib/clean-markdown');
 
 /**
  * Docusaurus plugin to copy raw markdown files to build output
  * This allows users to view markdown source by appending .md to URLs
  */
-
-// Convert Tabs/TabItem components to readable markdown format
-function convertTabsToMarkdown(content) {
-  const tabsPattern = /<Tabs[^>]*>([\s\S]*?)<\/Tabs>/g;
-
-  return content.replace(tabsPattern, (fullMatch, tabsContent) => {
-    const tabItemPattern = /<TabItem\s+[^>]*value="([^"]*)"[^>]*label="([^"]*)"[^>]*>([\s\S]*?)<\/TabItem>/g;
-
-    let result = [];
-    let match;
-
-    while ((match = tabItemPattern.exec(tabsContent)) !== null) {
-      const [, value, label, itemContent] = match;
-
-      // Clean up indentation from the tab content
-      const cleanContent = itemContent
-        .split('\n')
-        .map(line => line.replace(/^\s{4}/, '')) // Remove 4-space indentation
-        .join('\n')
-        .trim();
-
-      result.push(`**${label}:**\n\n${cleanContent}`);
-    }
-
-    return result.join('\n\n---\n\n');
-  });
-}
-
-// Convert details/summary components to readable markdown format
-function convertDetailsToMarkdown(content) {
-  const detailsPattern = /<details>\s*<summary>(<strong>)?([^<]+)(<\/strong>)?<\/summary>([\s\S]*?)<\/details>/g;
-
-  return content.replace(detailsPattern, (fullMatch, strongOpen, summaryText, strongClose, detailsContent) => {
-    // Clean up the details content
-    const cleanContent = detailsContent
-      .split('\n')
-      .map(line => line.trim())
-      .filter(line => line.length > 0)
-      .join('\n')
-      .trim();
-
-    return `### ${summaryText.trim()}\n\n${cleanContent}`;
-  });
-}
 
 // Flatten nested Docusaurus route tree into a flat array
 function flattenRoutes(routes) {
@@ -65,67 +22,6 @@ function stripBaseUrl(urlPath, baseUrl) {
     return urlPath.slice(baseUrl.length);
   }
   return urlPath.startsWith('/') ? urlPath.slice(1) : urlPath;
-}
-
-// Clean markdown content for raw display - remove MDX/Docusaurus-specific syntax
-function cleanMarkdownForDisplay(content, routeDir) {
-
-  // 1. Strip YAML front matter (--- at start, content, then ---)
-  content = content.replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n/, '');
-
-  // 2. Remove import statements (MDX imports)
-  content = content.replace(/^import\s+.*?from\s+['"].*?['"];?\s*$/gm, '');
-
-  // 3. Convert HTML images to markdown
-  // Pattern: <p align="center"><img src={require('./path').default} alt="..." width="..." /></p>
-  content = content.replace(
-    /<p align="center">\s*\n?\s*<img src=\{require\(['"]([^'"]+)['"]\)\.default\} alt="([^"]*)"(?:\s+width="[^"]*")?\s*\/>\s*\n?\s*<\/p>/g,
-    (match, imagePath, alt) => {
-      // Clean the path: remove @site/static prefix
-      const cleanPath = imagePath.replace('@site/static/', '/');
-      return `![${alt}](${cleanPath})`;
-    }
-  );
-
-  // 4. Convert YouTube iframes to text links
-  content = content.replace(
-    /<iframe[^>]*src="https:\/\/www\.youtube\.com\/embed\/([a-zA-Z0-9_-]+)[^"]*"[^>]*title="([^"]*)"[^>]*>[\s\S]*?<\/iframe>/g,
-    'Watch the video: [$2](https://www.youtube.com/watch?v=$1)'
-  );
-
-  // 5. Clean HTML5 video tags - keep HTML but add fallback text
-  content = content.replace(
-    /<video[^>]*>\s*<source src=["']([^"']+)["'][^>]*>\s*<\/video>/g,
-    '<video controls>\n  <source src="$1" type="video/mp4" />\n  <p>Video demonstration: $1</p>\n</video>'
-  );
-
-  // 6. Remove <Head> components with structured data (SEO metadata not needed in raw markdown)
-  content = content.replace(/<Head>[\s\S]*?<\/Head>/g, '');
-
-  // 7. Convert Tabs/TabItem components to readable markdown (preserve content)
-  content = convertTabsToMarkdown(content);
-
-  // 8. Convert details/summary components to readable markdown (preserve content)
-  content = convertDetailsToMarkdown(content);
-
-  // 9. Remove custom React/MDX components (FAQStructuredData, etc.)
-  // Matches both self-closing and paired tags: <Component ... /> or <Component ...>...</Component>
-  // This runs AFTER Tabs/details conversion to preserve their content
-  content = content.replace(/<[A-Z][a-zA-Z]*[\s\S]*?(?:\/>|<\/[A-Z][a-zA-Z]*>)/g, '');
-
-  // 10. Convert relative image paths to absolute paths using route URL directory
-  // Matches: ![alt](./img/file.png) or ![alt](img/file.png)
-  content = content.replace(
-    /!\[([^\]]*)\]\((\.\/)?img\/([^)]+)\)/g,
-    (match, alt, relPrefix, filename) => {
-      return `![${alt}](${routeDir}img/${filename})`;
-    }
-  );
-
-  // 11. Remove any leading blank lines
-  content = content.replace(/^\s*\n/, '');
-
-  return content;
 }
 
 // Normalize docsPath option to a consistent format for pathname matching
