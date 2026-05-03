@@ -4,6 +4,7 @@ import { useLocation } from '@docusaurus/router';
 import { createRoot } from 'react-dom/client';
 import { usePluginData } from '@docusaurus/useGlobalData';
 import MarkdownActionsDropdown from '../components/MarkdownActionsDropdown';
+import { decodeHashSafely } from '../lib/decode-hash';
 
 export default function Root({ children }) {
   const { hash, pathname } = useLocation();
@@ -12,32 +13,30 @@ export default function Root({ children }) {
   const containerRef = useRef(null);
 
   useEffect(() => {
-    if (hash) {
-      const scrollToElement = () => {
-        const id = decodeURIComponent(hash.substring(1));
-        const element = document.getElementById(id);
-        if (element) {
-          element.scrollIntoView({ behavior: 'smooth' });
-          return true;
-        }
-        return false;
-      };
+    if (!hash) return;
 
-      // Try immediately
-      if (!scrollToElement()) {
-        // If element not found, wait for images and content to load
-        const timeouts = [100, 300, 500, 1000];
-
-        timeouts.forEach(delay => {
-          setTimeout(() => {
-            scrollToElement();
-          }, delay);
-        });
-
-        // Also wait for images to load
-        window.addEventListener('load', scrollToElement, { once: true });
+    const scrollToElement = () => {
+      const id = decodeHashSafely(hash);
+      if (!id) return false;
+      const element = document.getElementById(id);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth' });
+        return true;
       }
-    }
+      return false;
+    };
+
+    if (scrollToElement()) return;
+
+    const timeoutIds = [100, 300, 500, 1000].map(delay =>
+      setTimeout(scrollToElement, delay)
+    );
+    window.addEventListener('load', scrollToElement, { once: true });
+
+    return () => {
+      timeoutIds.forEach(clearTimeout);
+      window.removeEventListener('load', scrollToElement);
+    };
   }, [hash]);
 
   // Inject dropdown button into article header
