@@ -434,7 +434,7 @@ MIT © FlyNumber
 ## Related
 
 - [Docusaurus](https://docusaurus.io/) - The documentation framework this plugin extends
-- [FlyNumber](https://www.flynumber.com/) - Cloud phone system and documentation platform
+- [FlyNumber](https://www.flynumber.com/) - Cloud phone system and virtual phone numbers
 
 ---
 
