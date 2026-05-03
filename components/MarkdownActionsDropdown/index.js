@@ -5,6 +5,16 @@ export default function MarkdownActionsDropdown() {
   const [copied, setCopied] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
+  const copyResetTimerRef = useRef(null);
+
+  // Clear any pending copy-reset timer on unmount so it cannot fire setState
+  // on a torn-down component or flip UI state after the user has navigated.
+  useEffect(() => () => {
+    if (copyResetTimerRef.current) {
+      clearTimeout(copyResetTimerRef.current);
+      copyResetTimerRef.current = null;
+    }
+  }, []);
 
   // Get pathname from window.location for URL construction
   const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
@@ -41,6 +51,13 @@ export default function MarkdownActionsDropdown() {
 
   // Handle copying markdown to clipboard
   const handleCopyMarkdown = async () => {
+    // Cancel any in-flight reset timer up front so a stale timer can't flip
+    // state during a slow fetch or after a rapid second click.
+    if (copyResetTimerRef.current) {
+      clearTimeout(copyResetTimerRef.current);
+      copyResetTimerRef.current = null;
+    }
+
     try {
       const response = await fetch(markdownUrl);
       if (!response.ok) {
@@ -50,9 +67,9 @@ export default function MarkdownActionsDropdown() {
       await navigator.clipboard.writeText(markdown);
 
       setCopied(true);
-      setTimeout(() => {
+      copyResetTimerRef.current = setTimeout(() => {
         setCopied(false);
-        setIsOpen(false);
+        copyResetTimerRef.current = null;
       }, 2000);
     } catch (error) {
       console.error('Failed to copy markdown:', error);
