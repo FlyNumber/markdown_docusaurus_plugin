@@ -1,5 +1,6 @@
 const fs = require('fs-extra');
 const path = require('path');
+const { getMarkdownUrl } = require('./lib/markdown-path');
 
 /**
  * Docusaurus plugin to copy raw markdown files to build output
@@ -177,9 +178,7 @@ module.exports = function markdownSourcePlugin(context, options = {}) {
           : route.path.replace(/[^/]+$/, '');
 
         // Construct the fetch URL the client dropdown will request
-        const fetchUrl = route.path.endsWith('/')
-          ? route.path + 'intro.md'
-          : route.path + '.md';
+        const fetchUrl = getMarkdownUrl(route.path);
 
         // Strip baseUrl to get build-relative path
         const buildRelPath = stripBaseUrl(fetchUrl, baseUrl);
