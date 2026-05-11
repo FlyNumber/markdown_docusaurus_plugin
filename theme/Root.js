@@ -3,7 +3,7 @@ import React, { useEffect, useRef } from 'react';
 import { useLocation } from '@docusaurus/router';
 import { createRoot } from 'react-dom/client';
 import { usePluginData } from '@docusaurus/useGlobalData';
-import MarkdownActionsDropdown from '../components/MarkdownActionsDropdown';
+import MarkdownActionsDropdown from '@theme/MarkdownActionsDropdown';
 import { decodeHashSafely } from '../lib/decode-hash';
 
 export default function Root({ children }) {
