@@ -97,7 +97,7 @@ article .markdown header h1 {
 
 /* Add hover effect for dropdown items */
 .dropdown__link:hover {
-  background-color: var(--ifm-hover-overlay);
+  background-color: rgba(0, 0, 0, 0.05);
 }
 
 /* Responsive adjustments for mobile */
@@ -296,7 +296,9 @@ location ~* ^/docs/.*/img/.* {
 | `X-Robots-Tag: noindex, nofollow` | Prevents search engines from indexing (avoids duplicate content SEO issues) while allowing AI assistants to access |
 | `Cache-Control` | Balances performance (caching) with content freshness |
 
-## CSS Customization
+## Customization
+
+### CSS Customization
 
 You can customize the dropdown appearance by overriding these CSS classes in your `custom.css`:
 
@@ -316,6 +318,18 @@ You can customize the dropdown appearance by overriding these CSS classes in you
   background-color: your-color;
 }
 ```
+
+### Component Customization with Swizzling
+
+For deeper changes such as button labels, icons, menu items, analytics, or custom copy/open behavior, swizzle the dropdown component itself:
+
+```bash
+npm run swizzle docusaurus-markdown-source-plugin MarkdownActionsDropdown -- --eject
+```
+
+This creates a local theme override at `src/theme/MarkdownActionsDropdown/index.js` in your Docusaurus site. The plugin's internal `Root` component will keep handling page injection, but it renders `@theme/MarkdownActionsDropdown`, so your swizzled component is used automatically.
+
+If you only need to wrap the default dropdown, import the original component from `@theme-original/MarkdownActionsDropdown` inside the swizzled file and compose around it.
 
 ## Troubleshooting
 
