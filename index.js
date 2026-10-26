@@ -134,9 +134,16 @@ module.exports = function markdownSourcePlugin(context, options = {}) {
 // is keyed by `options.id`), so default the id here. Validation throws so a
 // typo in aiProviders/aiPrompt fails `docusaurus build` with a clear message.
 function validateOptions({ options = {} }) {
+  const id = options.id ?? 'default';
+  if (id !== 'default') {
+    throw new Error(
+      `[markdown-source-plugin] Unsupported plugin id ${JSON.stringify(options.id)}: ` +
+      'only one instance is supported and its id must be "default" (theme/Root.js reads the default instance).'
+    );
+  }
   normalizeDocsPath(options.docsPath);
   normalizeAiOptions(options);
-  return { ...options, id: options.id ?? 'default' };
+  return { ...options, id };
 }
 
 module.exports.validateOptions = validateOptions;

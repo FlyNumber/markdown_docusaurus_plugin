@@ -16,7 +16,10 @@ function unmountLater(root) {
 
 export default function Root({ children }) {
   const { hash, pathname } = useLocation();
-  const { docsPath, aiProviders, aiPrompt } = usePluginData('markdown-source-plugin');
+  // validateOptions guarantees the default instance exists; the fallback keeps a
+  // site rendering (with default docsPath) rather than crashing if it ever does not.
+  const { docsPath = '/docs/', aiProviders, aiPrompt } =
+    usePluginData('markdown-source-plugin') || {};
   const dropdownRootRef = useRef(null);
   const containerRef = useRef(null);
 

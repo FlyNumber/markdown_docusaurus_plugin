@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useId } from 'react';
 import { getMarkdownUrl } from '../../lib/markdown-path';
-import { buildAiLinks, BUILT_IN_PROVIDERS, DEFAULT_PROMPT } from '../../lib/ai-providers';
+import { buildAiLinks, resolveContextUrls, BUILT_IN_PROVIDERS, DEFAULT_PROMPT } from '../../lib/ai-providers';
 import ProviderIcon from './ProviderIcon';
 
 const itemStyle = { cursor: 'pointer', border: 'none', background: 'none', width: '100%', textAlign: 'left' };
@@ -64,9 +64,15 @@ export default function MarkdownActionsDropdown({
   const aiLinks = buildAiLinks({
     aiProviders,
     aiPrompt,
-    pageUrl: origin + currentPath,
-    markdownUrl: origin + markdownUrl,
+    ...resolveContextUrls({ origin, pathname: currentPath }),
   });
+
+  // Closing hides the list, so a keyboard user who activated a row would be
+  // left on a hidden element; hand focus back to the trigger.
+  const closeAndRefocus = () => {
+    setIsOpen(false);
+    if (triggerRef.current) triggerRef.current.focus();
+  };
 
   // Handle opening markdown in new tab
   const handleOpenMarkdown = () => {
@@ -174,7 +180,7 @@ export default function MarkdownActionsDropdown({
               href={link.href}
               target="_blank"
               rel="noopener noreferrer"
-              onClick={() => setIsOpen(false)}
+              onClick={closeAndRefocus}
             >
               <ProviderIcon id={link.id} />
               {link.label}

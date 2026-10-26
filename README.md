@@ -438,9 +438,9 @@ module.exports = {
 | `perplexity` | Open in Perplexity | Markdown `.md` URL |
 | `grok` | Open in Grok | HTML page URL |
 
-**Why not the `.md` URL everywhere?** ChatGPT rejects `.md` links in a prefilled prompt, so it gets the HTML page plus a hint to browse the web. Claude and Perplexity accept the clean markdown this plugin generates, which is the better input, so they get it. Grok is given the HTML page as the safe choice. "Open in Gemini" opens Google's AI Mode (a Gemini-powered Search experience) because gemini.google.com has no way to prefill a prompt from a link.
+**Why not the `.md` URL everywhere?** ChatGPT rejects `.md` links in a prefilled prompt, so it gets the HTML page plus a hint to browse the web. Claude and Perplexity are handed the clean markdown this plugin generates, the better input and the convention Bun's and Mintlify's docs use. Grok is given the HTML page as the safe choice. "Open in Gemini" opens Google's AI Mode (a Gemini-powered Search experience) because gemini.google.com has no way to prefill a prompt from a link.
 
-**The assistant fetches the page itself.** The prompt only contains a link, built from the browser's current origin. The site must be publicly reachable: on `localhost`, on deploy previews behind authentication, or on private sites the assistant cannot read the page. Claude requires sign-in; Grok asks the reader to confirm the pre-filled message before sending.
+**The assistant fetches the page itself.** The prompt only contains a link, built from the browser's current origin. The site must be publicly reachable: on `localhost`, on deploy previews behind authentication, or on private sites the assistant cannot read the page. Whether a given assistant actually retrieves the page is up to that assistant. Claude requires sign-in; Grok asks the reader to confirm the pre-filled message before sending; Google and Perplexity may show a bot check to automated browsers.
 
 **Trim or reorder** by listing only the ids you want. **Hide the section** with `aiProviders: []` (or `false`). **Add an assistant** with a custom entry:
 

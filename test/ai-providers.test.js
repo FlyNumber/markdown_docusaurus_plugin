@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { BUILT_IN_PROVIDERS, DEFAULT_PROMPT, normalizeAiOptions, buildAiLinks } = require('../lib/ai-providers');
+const { BUILT_IN_PROVIDERS, DEFAULT_PROMPT, normalizeAiOptions, buildAiLinks, resolveContextUrls } = require('../lib/ai-providers');
 
 const IDS = ['chatgpt', 'claude', 'gemini', 'perplexity', 'grok'];
 const promptFor = url => `Read ${url} so I can ask questions about it.`;
@@ -70,6 +70,16 @@ test('normalize: rejects malformed custom entries', () => {
   for (const [entry, re] of bad) assert.throws(() => normalizeAiOptions({ aiProviders: [entry] }), re, JSON.stringify(entry));
 });
 
+test('normalize: rejects sparse arrays (a hole would serialize to null and break the dropdown)', () => {
+  const sparse = ['chatgpt', , 'claude']; // eslint-disable-line no-sparse-arrays
+  assert.throws(() => normalizeAiOptions({ aiProviders: sparse }), /\[markdown-source-plugin\] .*aiProviders\[1\]/);
+});
+
+test('normalize: output survives a JSON round trip unchanged', () => {
+  const out = normalizeAiOptions({ aiProviders: ['chatgpt', { label: 'X', url: 'https://x.test/?q={prompt}' }] });
+  assert.deepEqual(JSON.parse(JSON.stringify(out)), out);
+});
+
 test('normalize: rejects non-array aiProviders and bad aiPrompt', () => {
   assert.throws(() => normalizeAiOptions({ aiProviders: 'chatgpt' }), /\[markdown-source-plugin\] .*aiProviders/);
   assert.throws(() => normalizeAiOptions({ aiProviders: [42] }), /\[markdown-source-plugin\] .*aiProviders/);
@@ -128,6 +138,19 @@ test('buildAiLinks: every {url} occurrence is replaced and $& in a template is l
   const u = new URL(link.href);
   assert.equal(u.searchParams.get('q'), `Open ${ctx.pageUrl} then summarise ${ctx.pageUrl}.`);
   assert.equal(u.searchParams.get('pre'), '$');
+});
+
+test('buildAiLinks: $& in the page and markdown URLs is substituted literally', () => {
+  const { aiProviders, aiPrompt } = normalizeAiOptions({ aiProviders: ['chatgpt', 'claude'] });
+  const links = buildAiLinks({ aiProviders, aiPrompt, pageUrl: 'https://docs.test/a$&b', markdownUrl: 'https://docs.test/a$&b.md' });
+  assert.equal(qOf(links[0].href), promptFor('https://docs.test/a$&b'));
+  assert.equal(qOf(links[1].href), promptFor('https://docs.test/a$&b.md'));
+});
+
+test('resolveContextUrls: builds absolute page and markdown URLs from origin + pathname, keeping baseUrl', () => {
+  assert.deepEqual(resolveContextUrls({ origin: 'https://h.test', pathname: '/sub/docs/x' }), { pageUrl: 'https://h.test/sub/docs/x', markdownUrl: 'https://h.test/sub/docs/x.md' });
+  assert.deepEqual(resolveContextUrls({ origin: 'https://h.test', pathname: '/sub/docs/' }), { pageUrl: 'https://h.test/sub/docs/', markdownUrl: 'https://h.test/sub/docs/index.md' });
+  assert.deepEqual(resolveContextUrls({ origin: 'http://localhost:3000', pathname: '/docs/intro' }), { pageUrl: 'http://localhost:3000/docs/intro', markdownUrl: 'http://localhost:3000/docs/intro.md' });
 });
 
 test('buildAiLinks: custom entries honour their context', () => {

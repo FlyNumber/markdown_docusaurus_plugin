@@ -9,11 +9,16 @@ test('validateOptions: bare registration gets id "default" and keeps raw options
   assert.equal(out.docsPath, undefined);
 });
 
-test('validateOptions: explicit id and other keys are preserved', () => {
-  const out = plugin.validateOptions({ options: { id: 'second', docsPath: 'guides', aiProviders: ['claude'] } });
-  assert.equal(out.id, 'second');
+test('validateOptions: explicit "default" id and other keys are preserved', () => {
+  const out = plugin.validateOptions({ options: { id: 'default', docsPath: 'guides', aiProviders: ['claude'] } });
+  assert.equal(out.id, 'default');
   assert.equal(out.docsPath, 'guides');
   assert.deepEqual(out.aiProviders, ['claude']);
+});
+
+test('validateOptions: non-default or malformed ids are rejected because Root reads the default instance', () => {
+  assert.throws(() => plugin.validateOptions({ options: { id: 'second' } }), /\[markdown-source-plugin\] .*id "second".*default/);
+  assert.throws(() => plugin.validateOptions({ options: { id: 42 } }), /\[markdown-source-plugin\] .*id 42.*default/);
 });
 
 test('validateOptions: bad config throws at config time', () => {
