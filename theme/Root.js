@@ -6,9 +6,17 @@ import { usePluginData } from '@docusaurus/useGlobalData';
 import MarkdownActionsDropdown from '../components/MarkdownActionsDropdown';
 import { decodeHashSafely } from '../lib/decode-hash';
 
+// root.unmount() must not run while React is rendering or committing. Our
+// effect cleanup runs inside React's commit phase, so a synchronous unmount
+// there triggers "Attempted to synchronously unmount a root while React was
+// already rendering" (issue #12). Deferring to a macrotask moves it out.
+function unmountLater(root) {
+  setTimeout(() => root.unmount(), 0);
+}
+
 export default function Root({ children }) {
   const { hash, pathname } = useLocation();
-  const { docsPath } = usePluginData('markdown-source-plugin');
+  const { docsPath, aiProviders, aiPrompt } = usePluginData('markdown-source-plugin');
   const dropdownRootRef = useRef(null);
   const containerRef = useRef(null);
 
@@ -50,7 +58,7 @@ export default function Root({ children }) {
 
     const cleanup = () => {
       if (dropdownRootRef.current) {
-        dropdownRootRef.current.unmount();
+        unmountLater(dropdownRootRef.current);
         dropdownRootRef.current = null;
       }
       if (containerRef.current) {
@@ -68,7 +76,7 @@ export default function Root({ children }) {
 
       // Unmount previous root if it exists (e.g., was on stale DOM that got swapped)
       if (dropdownRootRef.current) {
-        dropdownRootRef.current.unmount();
+        unmountLater(dropdownRootRef.current);
         dropdownRootRef.current = null;
       }
 
@@ -78,7 +86,7 @@ export default function Root({ children }) {
       containerRef.current = container;
 
       const root = createRoot(container);
-      root.render(<MarkdownActionsDropdown />);
+      root.render(<MarkdownActionsDropdown aiProviders={aiProviders} aiPrompt={aiPrompt} />);
       dropdownRootRef.current = root;
 
       return true;
@@ -104,7 +112,7 @@ export default function Root({ children }) {
       observer.disconnect();
       cleanup();
     };
-  }, [pathname, docsPath]);
+  }, [pathname, docsPath, aiProviders, aiPrompt]);
 
   return <>{children}</>;
 }
