@@ -3,6 +3,7 @@ const path = require('path');
 const { getMarkdownUrl } = require('./lib/markdown-path');
 const { cleanMarkdownForDisplay } = require('./lib/clean-markdown');
 const { recordImgMapping } = require('./lib/img-mapping');
+const { normalizeAiOptions } = require('./lib/ai-providers');
 
 /**
  * Docusaurus plugin to copy raw markdown files to build output
@@ -46,8 +47,12 @@ module.exports = function markdownSourcePlugin(context, options = {}) {
     },
 
     async contentLoaded({ actions }) {
-      const docsPath = normalizeDocsPath(options.docsPath || '/docs/');
-      actions.setGlobalData({ docsPath });
+      // Plain JSON only: this is serialized into the client bundle and read by
+      // theme/Root.js through usePluginData('markdown-source-plugin').
+      actions.setGlobalData({
+        docsPath: normalizeDocsPath(options.docsPath),
+        ...normalizeAiOptions(options),
+      });
     },
 
     async postBuild({ outDir, routes, baseUrl }) {
@@ -123,3 +128,15 @@ module.exports = function markdownSourcePlugin(context, options = {}) {
     },
   };
 };
+
+// Docusaurus calls this at config load and uses the return value as the
+// plugin's options verbatim (it does not add `id` afterwards, and global data
+// is keyed by `options.id`), so default the id here. Validation throws so a
+// typo in aiProviders/aiPrompt fails `docusaurus build` with a clear message.
+function validateOptions({ options = {} }) {
+  normalizeDocsPath(options.docsPath);
+  normalizeAiOptions(options);
+  return { ...options, id: options.id ?? 'default' };
+}
+
+module.exports.validateOptions = validateOptions;
