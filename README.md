@@ -9,6 +9,7 @@ A lightweight Docusaurus plugin that exposes your markdown files as raw `.md` UR
 
 - 🔗 **Direct `.md` URL Access**: Append `.md` to any docs URL to view raw markdown
 - 📋 **Copy to Clipboard**: One-click copy of markdown content
+- 🤖 **Open in ChatGPT / Claude / Gemini / Perplexity / Grok**: One click opens the assistant with a prompt linking to the page
 - 🎨 **Clean UI**: Dropdown menu in article headers
 - 🤖 **LLM-Friendly**: Clean markdown output optimized for AI assistants
 - 🖼️ **Image Support**: Handles images with absolute paths
@@ -21,7 +22,7 @@ See it in action at [flynumber.com/docs/](https://www.flynumber.com/docs/) - try
 
 ## Screenshot
 
-<img src=".github/images/button_screenshot.png" alt="Open Markdown Dropdown" width="400" />
+<img src=".github/images/button_screenshot.png" alt="Open Markdown dropdown with View as Markdown, Copy Page as Markdown and Open in ChatGPT, Claude, Gemini, Perplexity and Grok" width="560" />
 
 ## Installation
 
@@ -160,9 +161,10 @@ Visit any docs page - you should see the "Open Markdown" dropdown in the header!
    - Copies image directories to build output
    - Automatically handles custom `routeBasePath`, versioned docs, and i18n
 
-2. **Runtime**: The React component adds a dropdown menu to each docs page with two actions:
+2. **Runtime**: The React component adds a dropdown menu to each docs page with:
    - **View as Markdown**: Opens the raw markdown file in a new tab
    - **Copy Page as Markdown**: Copies the markdown source to clipboard
+   - **Open in ChatGPT / Claude / Gemini / Perplexity / Grok**: Opens the assistant with a prompt linking to this page (see [AI Assistant Actions](#ai-assistant-actions))
 
 3. **Server**: Proper HTTP headers prevent search engines from indexing .md files while allowing AI assistants to access them
 
@@ -377,6 +379,16 @@ You can customize the dropdown appearance by overriding these CSS classes in you
 
 3. **Check permissions**: Some browsers require user permission for clipboard access.
 
+### AI Assistant Rows Missing or Pointing at localhost
+
+1. **Check the option**: `aiProviders: []` or `false` hides the rows on purpose.
+
+2. **Rebuild after config changes**: the list is fixed at build time.
+
+3. **Links use the live origin**: on `localhost` the assistant receives `http://localhost:3000/...`, which it cannot fetch. Deploy to a public URL to test end to end.
+
+4. **Copied Root**: see [Upgrading from 2.2.x](#upgrading-from-22x).
+
 ## Advanced Configuration
 
 ### Custom Docs Path
@@ -401,14 +413,63 @@ Common configurations:
 | Docs-only subdomain (`docs.example.com`) | `'/'` |
 | Custom path (`/documentation/`) | `'/documentation/'` |
 
-> **Note:** When `docsPath` is `'/'`, the dropdown appears on any page that has an article header. This is intended for docs-only sites. Sites with both docs and blog at root may see the dropdown on blog pages too.
+> **Note:** When `docsPath` is `'/'`, the dropdown appears on any page that has a docs article header. This is intended for docs-only sites.
 
-### Blog Support
+### AI Assistant Actions
 
-For blog support, swizzle the components and modify the path detection logic:
+Since 2.3.0 the dropdown also offers **Open in ChatGPT / Claude / Gemini / Perplexity / Grok**. Each row opens the assistant in a new tab with a prompt already filled in that links to the current page, so the reader can start asking questions straight away. All five are on by default; no configuration is required.
 
-```bash
-npm run swizzle docusaurus-markdown-source-plugin Root -- --eject
+```javascript
+module.exports = {
+  plugins: [
+    ['docusaurus-markdown-source-plugin', {
+      aiProviders: ['chatgpt', 'claude', 'gemini', 'perplexity', 'grok'], // default; order is the menu order
+      aiPrompt: 'Read {url} so I can ask questions about it.',           // default; must contain {url}
+    }],
+  ],
+};
+```
+
+| id | Menu label | URL the assistant receives |
+|----|------------|----------------------------|
+| `chatgpt` | Open in ChatGPT | HTML page URL |
+| `claude` | Open in Claude | Markdown `.md` URL |
+| `gemini` | Open in Gemini | HTML page URL |
+| `perplexity` | Open in Perplexity | Markdown `.md` URL |
+| `grok` | Open in Grok | HTML page URL |
+
+**Why not the `.md` URL everywhere?** ChatGPT rejects `.md` links in a prefilled prompt, so it gets the HTML page plus a hint to browse the web. Claude and Perplexity accept the clean markdown this plugin generates, which is the better input, so they get it. Grok is given the HTML page as the safe choice. "Open in Gemini" opens Google's AI Mode (a Gemini-powered Search experience) because gemini.google.com has no way to prefill a prompt from a link.
+
+**The assistant fetches the page itself.** The prompt only contains a link, built from the browser's current origin. The site must be publicly reachable: on `localhost`, on deploy previews behind authentication, or on private sites the assistant cannot read the page. Claude requires sign-in; Grok asks the reader to confirm the pre-filled message before sending.
+
+**Trim or reorder** by listing only the ids you want. **Hide the section** with `aiProviders: []` (or `false`). **Add an assistant** with a custom entry:
+
+```javascript
+aiProviders: [
+  'chatgpt',
+  'claude',
+  { label: 'Open in Mistral', url: 'https://chat.mistral.ai/chat?q={prompt}' },
+],
+```
+
+A custom entry has a `label`, a `url` template containing `{prompt}` (the URL-encoded prompt is substituted in), and optionally `context: 'markdown'` to hand it the `.md` URL instead of the HTML page. Custom entries render with a generic icon. Invalid entries fail the build with a message naming the problem.
+
+### Blog Pages
+
+Blog pages are not supported. The classic theme renders the blog post header outside the `.markdown` container, so the injection point this plugin targets (`article .markdown header`) does not exist on blog posts, whatever `docsPath` is set to.
+
+### Upgrading from 2.2.x
+
+No configuration changes are needed; the five assistant rows appear automatically (set `aiProviders: []` to opt out). If you ever copied the plugin's `Root` component into your site's `src/theme` folder, delete that copy: it shadows the plugin's `Root`, fails to build on the plugin's internal imports, and would hide the new rows. To add your own logic around the plugin's `Root`, wrap it instead:
+
+```javascript
+// src/theme/Root.js
+import React from 'react';
+import PluginRoot from '@theme-original/Root';
+
+export default function Root({ children }) {
+  return <PluginRoot>{children}</PluginRoot>;
+}
 ```
 
 ## Contributing

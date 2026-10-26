@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.0] - 2026-10-26
+
+### Added
+- **Open in ChatGPT / Claude / Gemini / Perplexity / Grok** rows in the dropdown, on by default. Each opens the assistant in a new tab with a prompt linking to the current page (`Read {url} so I can ask questions about it.`). ChatGPT, Gemini and Grok receive the HTML page URL (ChatGPT rejects `.md` links in a prefilled prompt; "Open in Gemini" opens Google AI Mode because gemini.google.com has no prefill parameter); Claude and Perplexity receive the clean `.md` URL. Brand marks are inlined from `@lobehub/icons-static-svg` (MIT): no network requests, no new dependencies.
+- `aiProviders` option: the built-in ids to show, in menu order, or `[]`/`false` to hide the section. Custom entries `{ label, url, context? }` with a `{prompt}` placeholder are accepted. `aiPrompt` option customises the prompt (must contain `{url}`).
+- `validateOptions` export: invalid `aiProviders`/`aiPrompt` values now fail `docusaurus build` with a message naming the option, instead of silently rendering nothing.
+- Docusaurus 4 accepted as a peer dependency (`^3.0.0 || ^4.0.0-0`, so v4 prereleases install without peer warnings). Verified on `@docusaurus/core` 4.0.0-canary-7002 with React 19.3.1 on Node 24.22.1: `.md` output, dropdown injection and client-side navigation all work.
+
+### Fixed
+- **React warning "Attempted to synchronously unmount a root while React was already rendering" on client-side navigation** (#12). `Root.js` unmounted the dropdown's React root synchronously inside its effect cleanup, which runs during React's commit phase. The unmount is now deferred to a macrotask. Reproduced and verified gone under `docusaurus start` on Docusaurus 3.10.1 with rapid navigation.
+- "View as Markdown" opens its tab with `noopener,noreferrer`.
+
+### Changed
+- Dropdown trigger uses disclosure semantics: `aria-haspopup` removed, `aria-controls` links the trigger to the list, and Escape closes the list and returns focus to the trigger. Assistant rows are real links (middle-click and copy-link work) with `rel="noopener noreferrer"`.
+- README: documents the new options, states that blog pages are not supported (the classic theme renders the blog header outside `.markdown`), and replaces the old "eject Root" advice with the wrap pattern.
+
 ## [2.2.5] - 2026-05-03
 
 ### Fixed
@@ -172,6 +188,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Compatible with Docusaurus v3.x
 - Uses React 18's createRoot API for component injection
 
+[2.3.0]: https://github.com/FlyNumber/markdown_docusaurus_plugin/releases/tag/v2.3.0
 [2.2.5]: https://github.com/FlyNumber/markdown_docusaurus_plugin/releases/tag/v2.2.5
 [2.2.4]: https://github.com/FlyNumber/markdown_docusaurus_plugin/releases/tag/v2.2.4
 [2.2.3]: https://github.com/FlyNumber/markdown_docusaurus_plugin/releases/tag/v2.2.3
