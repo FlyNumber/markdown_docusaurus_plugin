@@ -12,6 +12,8 @@
 
 **Review history:** Codex plan review 1 (gpt-6-astra, 2026-10-26) returned 12 findings, verdict "proceed with fixes"; all are folded in below (blocker: `id` defaulting in `validateOptions`; dev-mode verification of #12; tarball name; scratch-site `docsPath`; absolute-URL validation; strict custom-entry schema; README migration/blog copy; test fixes; a11y disclosure; exit-status handling).
 
+**Amendment 2026-10-27 (after execution):** release-candidate testing and a peer survey changed two defaults: Perplexity's context is now `page` (it could not retrieve the `noindex` `.md` twin and answered from its indexed HTML copy) and the default prompt is `Read from {url} so I can ask questions about it.` The spec is updated. Test examples and browser expectations below that still show `Read {url}` or a markdown URL for Perplexity are superseded and kept only as the record of what was executed.
+
 ## Global Constraints
 
 - No new runtime dependency; `fs-extra` stays the only one. Icons are inline path data, never fetched.
