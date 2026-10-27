@@ -49,6 +49,8 @@ The trigger follows the disclosure pattern rather than announcing a menu it does
 
 Why the split: ChatGPT rejects `.md` URLs in a prefilled prompt (Neon and Bun both link it to the HTML page; `hints=search` makes it browse rather than answer from memory). Google's Gemini web app has no prefill parameter, so "Open in Gemini" opens Google AI Mode, which is Gemini-powered and reads the HTML page; the README says so. Claude fetches a user-supplied URL live and accepts the clean markdown URL, which is the whole point of the plugin, so it gets it (Mintlify, Bun and PostHog do the same). Grok has no evidence either way, so it gets the HTML page URL, the safe choice.
 
+ChatGPT, revised 2026-10-27 (2.3.2): a controlled test with Cloudflare's request log as referee showed `ChatGPT-User` fetching the `.md` live (200) and answering from it, both with and without `hints=search`; the "ChatGPT rejects .md" premise from Neon's notes did not hold. ChatGPT now receives the markdown URL. Perplexity (below) stays on the page URL because it never fetched at all.
+
 Perplexity, revised 2026-10-27: the owner's own test showed Perplexity answering from its search index and reporting the `.md` twin "couldn't be retrieved"; the twins are `noindex` by this plugin's recommended headers, so they are never in that index. Mintlify still sends Perplexity the `.md`, but the evidence here wins: Perplexity gets the HTML page URL. The peer survey of 2026-10-27 (twelve docs sites) also fixed the default prompt wording to the de-facto standard "Read from {url} so I can ask questions about it."
 
 Icons come from `@lobehub/icons-static-svg` 1.101.0 (MIT), which has consistent 24x24 `currentColor` marks for all five. The path data is inlined; the package is not a dependency.

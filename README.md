@@ -97,7 +97,7 @@ article .markdown header h1 {
 
 - **Build time.** `postBuild` walks the Docusaurus route tree and, for every route with a markdown source, writes a cleaned `.md` into the build directory and copies the doc's `img/` folders. Custom `routeBasePath`, versioned docs and i18n are handled through the route metadata, not by scanning the filesystem. Routes ending in `/` become `index.md`.
 - **Runtime.** The plugin's `Root` wrapper injects the dropdown into `article .markdown header` on pages under `docsPath`. The dropdown builds its links from the current URL, so no page data is needed.
-- **Assistant links.** Each row opens the assistant's new-chat URL with the prompt `Read from {url} so I can ask questions about it.` ChatGPT, Gemini, Perplexity and Grok receive the HTML page URL; Claude receives the `.md`. See [Options](#options) for why.
+- **Assistant links.** Each row opens the assistant's new-chat URL with the prompt `Read from {url} so I can ask questions about it.` ChatGPT and Claude receive the `.md`; Gemini, Perplexity and Grok receive the HTML page URL. See [Options](#options) for why.
 
 ## Options
 
@@ -125,13 +125,13 @@ Invalid values fail `docusaurus build` with a message naming the option.
 
 | id | Row | URL in the prompt |
 |----|-----|-------------------|
-| `chatgpt` | Open in ChatGPT | HTML page |
+| `chatgpt` | Open in ChatGPT | `.md` copy |
 | `claude` | Open in Claude | `.md` copy |
 | `gemini` | Open in Gemini | HTML page |
 | `perplexity` | Open in Perplexity | HTML page |
 | `grok` | Open in Grok | HTML page |
 
-Why not the `.md` everywhere: ChatGPT rejects `.md` links in a prefilled prompt, and Perplexity answers from its search index, which never holds the `.md` copies because the headers below mark them `noindex`. Both get the page they already know and ChatGPT gets a hint to browse. Claude fetches whatever URL it is given, so it gets the cleaner markdown. "Open in Gemini" opens Google's AI Mode, since gemini.google.com has no way to prefill a prompt from a link.
+ChatGPT and Claude fetch whatever URL they are given, so they get the clean markdown; in testing, ChatGPT requested the `.md` live and answered from it. Perplexity and Google AI Mode answer from their search index instead of fetching, and the `.md` copies are never in any index because the headers below mark them `noindex`, so those two get the HTML page they already know. Grok is untested and gets the page as the safe choice. "Open in Gemini" opens Google's AI Mode, since gemini.google.com has no way to prefill a prompt from a link.
 
 The assistant fetches the page itself, so the site has to be publicly reachable. On `localhost`, password-protected previews or private sites the rows open but the assistant cannot read the page. Claude asks for sign-in first; Grok asks the reader to confirm the prefilled message.
 

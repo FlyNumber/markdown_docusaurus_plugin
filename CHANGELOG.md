@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.2] - 2026-10-27
+
+### Changed
+- **"Open in ChatGPT" now hands ChatGPT the `.md` copy**, like Claude. Testing against Cloudflare's request log showed ChatGPT fetching the `.md` live (verified `ChatGPT-User` request, 200) and answering from it, with and without the `hints=search` parameter. The earlier assumption that ChatGPT rejects `.md` links came from another project's notes and did not hold. Perplexity and Google AI Mode keep the HTML page URL: they answer from their search index, which never contains the `noindex` `.md` copies.
+
 ## [2.3.1] - 2026-10-27
 
 ### Documentation
@@ -194,6 +199,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Compatible with Docusaurus v3.x
 - Uses React 18's createRoot API for component injection
 
+[2.3.2]: https://github.com/FlyNumber/markdown_docusaurus_plugin/releases/tag/v2.3.2
 [2.3.1]: https://github.com/FlyNumber/markdown_docusaurus_plugin/releases/tag/v2.3.1
 [2.3.0]: https://github.com/FlyNumber/markdown_docusaurus_plugin/releases/tag/v2.3.0
 [2.2.5]: https://github.com/FlyNumber/markdown_docusaurus_plugin/releases/tag/v2.2.5

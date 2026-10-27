@@ -8,9 +8,11 @@ const qOf = href => new URL(href).searchParams.get('q');
 
 test('built-in table: five ids in spec order with context split', () => {
   assert.deepEqual(BUILT_IN_PROVIDERS.map(p => p.id), IDS);
-  // Only Claude receives the .md twin: ChatGPT rejects .md links, Perplexity failed to
-  // retrieve the noindexed twin in the owner's own test, Gemini/Grok get the safe choice.
-  assert.deepEqual(BUILT_IN_PROVIDERS.map(p => p.context), ['page', 'markdown', 'page', 'page', 'page']);
+  // ChatGPT and Claude fetch a user-supplied URL live, so they get the .md twin
+  // (verified 2026-10-27: ChatGPT-User requested /docs/faq.md and answered from it).
+  // Perplexity and Google AI Mode answer from their search index, which never holds
+  // the noindexed twins, so they get the HTML page; Grok gets the safe choice.
+  assert.deepEqual(BUILT_IN_PROVIDERS.map(p => p.context), ['markdown', 'markdown', 'page', 'page', 'page']);
   for (const p of BUILT_IN_PROVIDERS) assert.ok(p.url.includes('{prompt}'), p.id);
   assert.equal(BUILT_IN_PROVIDERS[0].url, 'https://chatgpt.com/?hints=search&q={prompt}');
   assert.equal(BUILT_IN_PROVIDERS[1].url, 'https://claude.ai/new?q={prompt}');
@@ -96,7 +98,7 @@ test('buildAiLinks: each built-in gets its context URL inside the prompt, read b
   const { aiProviders, aiPrompt } = normalizeAiOptions({});
   const links = buildAiLinks({ aiProviders, aiPrompt, ...ctx });
   const byId = Object.fromEntries(links.map(l => [l.id, l.href]));
-  assert.equal(qOf(byId.chatgpt), promptFor(ctx.pageUrl));
+  assert.equal(qOf(byId.chatgpt), promptFor(ctx.markdownUrl));
   assert.equal(new URL(byId.chatgpt).searchParams.get('hints'), 'search');
   assert.equal(new URL(byId.chatgpt).origin + new URL(byId.chatgpt).pathname, 'https://chatgpt.com/');
   assert.equal(qOf(byId.claude), promptFor(ctx.markdownUrl));
@@ -127,7 +129,7 @@ test('buildAiLinks: reads back the exact prompt through URLSearchParams for host
 test('buildAiLinks: full pathname is used, so baseUrl survives', () => {
   const { aiProviders, aiPrompt } = normalizeAiOptions({ aiProviders: ['chatgpt', 'claude'] });
   const links = buildAiLinks({ aiProviders, aiPrompt, pageUrl: 'https://h.test/sub/docs/x', markdownUrl: 'https://h.test/sub/docs/x.md' });
-  assert.equal(qOf(links[0].href), promptFor('https://h.test/sub/docs/x'));
+  assert.equal(qOf(links[0].href), promptFor('https://h.test/sub/docs/x.md'));
   assert.equal(qOf(links[1].href), promptFor('https://h.test/sub/docs/x.md'));
 });
 
@@ -143,7 +145,7 @@ test('buildAiLinks: every {url} occurrence is replaced and $& in a template is l
 });
 
 test('buildAiLinks: $& in the page and markdown URLs is substituted literally', () => {
-  const { aiProviders, aiPrompt } = normalizeAiOptions({ aiProviders: ['chatgpt', 'claude'] });
+  const { aiProviders, aiPrompt } = normalizeAiOptions({ aiProviders: ['perplexity', 'claude'] });
   const links = buildAiLinks({ aiProviders, aiPrompt, pageUrl: 'https://docs.test/a$&b', markdownUrl: 'https://docs.test/a$&b.md' });
   assert.equal(qOf(links[0].href), promptFor('https://docs.test/a$&b'));
   assert.equal(qOf(links[1].href), promptFor('https://docs.test/a$&b.md'));
