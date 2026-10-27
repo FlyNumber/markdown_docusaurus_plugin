@@ -211,7 +211,8 @@ The build writes plain files, so any static host serves them. Two headers are wo
   X-Robots-Tag: googlebot: noindex, nofollow, bingbot: noindex, nofollow, duckduckbot: noindex, nofollow
   Cache-Control: public, max-age=3600, must-revalidate
 
-/docs/*/img/*
+# Cloudflare allows one * per rule, so add one rule per image directory, e.g.:
+/docs/guides/img/*
   X-Robots-Tag: googlebot: noindex, nofollow, bingbot: noindex, nofollow, duckduckbot: noindex, nofollow
   Cache-Control: public, max-age=86400, immutable
 ```
@@ -228,10 +229,10 @@ The build writes plain files, so any static host serves them. Two headers are wo
   Header set Cache-Control "public, max-age=3600, must-revalidate"
 </FilesMatch>
 
-<LocationMatch "^/docs/.*/img/.*">
+<If "%{REQUEST_URI} =~ m#^/docs/.*/img/#">
   Header set X-Robots-Tag "googlebot: noindex, nofollow, bingbot: noindex, nofollow, duckduckbot: noindex, nofollow"
   Header set Cache-Control "public, max-age=86400, immutable"
-</LocationMatch>
+</If>
 ```
 </details>
 

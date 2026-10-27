@@ -16,6 +16,12 @@ test('getHtmlOutputPath: trailingSlash:false maps to <route>.html', () => {
   assert.equal(getHtmlOutputPath('/docs/faq', false), '/docs/faq.html');
 });
 
+test('getHtmlOutputPath: routes that already end in .html/.htm are written as-is', () => {
+  assert.equal(getHtmlOutputPath('/docs/guide.html', undefined), '/docs/guide.html');
+  assert.equal(getHtmlOutputPath('/docs/guide.html', false), '/docs/guide.html');
+  assert.equal(getHtmlOutputPath('/docs/guide.HTM', true), '/docs/guide.HTM');
+});
+
 test('non-trailing-slash routes append .md to the path', () => {
   assert.equal(getMarkdownUrl('/docs/intro'), '/docs/intro.md');
   assert.equal(getMarkdownUrl('/docs/guides/foo'), '/docs/guides/foo.md');

@@ -81,6 +81,22 @@ test('postBuild: running twice does not duplicate the link', async () => {
   assert.equal((html.match(/rel="alternate"/g) || []).length, 1);
 });
 
+test('postBuild: a locale with its own url advertises that url', async () => {
+  const site = makeSite({ baseUrl: '/', trailingSlash: undefined });
+  const options = plugin.validateOptions({ options: {} });
+  const instance = plugin({ siteDir: site.siteDir, siteConfig: site.siteConfig }, options);
+  const log = console.log; console.log = () => {};
+  try {
+    await instance.postBuild({
+      outDir: site.outDir, routes: site.routes, baseUrl: '/', siteConfig: site.siteConfig,
+      i18n: { currentLocale: 'fr', localeConfigs: { en: {}, fr: { url: 'https://fr.ex.test' } } },
+    });
+  } finally { console.log = log; }
+  const html = fs.readFileSync(path.join(site.outDir, 'intro', 'index.html'), 'utf8');
+  assert.ok(html.includes('href="https://fr.ex.test/intro.md"'), html);
+  assert.ok(fs.readFileSync(path.join(site.outDir, 'llms.txt'), 'utf8').includes('(https://fr.ex.test/intro.md)'));
+});
+
 test('validateOptions: llmsTxt must be a boolean', () => {
   assert.throws(() => plugin.validateOptions({ options: { llmsTxt: 'yes' } }), /\[markdown-source-plugin\] .*llmsTxt/);
   assert.equal(plugin.validateOptions({ options: { llmsTxt: false } }).llmsTxt, false);

@@ -57,11 +57,14 @@ module.exports = function markdownSourcePlugin(context, options = {}) {
       });
     },
 
-    async postBuild({ outDir, routes, baseUrl, siteConfig }) {
+    async postBuild({ outDir, routes, baseUrl, siteConfig, i18n }) {
       console.log('[markdown-source-plugin] Processing markdown source files...');
 
       const config = siteConfig || context.siteConfig || {};
-      const siteUrl = String(config.url || '').replace(/\/$/, '');
+      // A locale may be served from its own domain (i18n.localeConfigs[locale].url)
+      const locales = i18n || context.i18n || {};
+      const localeUrl = locales.localeConfigs?.[locales.currentLocale]?.url;
+      const siteUrl = String(localeUrl || config.url || '').replace(/\/$/, '');
 
       // Flatten nested routes and filter to markdown sources
       const allRoutes = flattenRoutes(routes);

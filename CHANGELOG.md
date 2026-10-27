@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - **`<link rel="alternate" type="text/markdown" href="…">`** is inserted into the built HTML of every page that has a markdown twin, the convention Mintlify, Anthropic, Bun and Cloudflare docs use to advertise markdown to crawlers. Only pages with a twin get it, it is idempotent, and nothing is added to the client bundle.
 - **`llms.txt`** at the build root (`/docs/llms.txt` on a `/docs/` site) listing every twin with its title (front matter `title`, else the first heading). New `llmsTxt: false` option disables it for sites that generate their own.
+- Both honour a locale's own domain (`i18n.localeConfigs[locale].url`) and routes that end in `.html`; link destinations with parentheses or spaces are written in angle brackets.
 
 ### Changed
 - The recommended `X-Robots-Tag` for `.md` files is now per-bot (`googlebot`, `bingbot` and `duckduckbot` get `noindex, nofollow`) instead of a blanket `noindex`, so AI search crawlers such as PerplexityBot and OAI-SearchBot can index the markdown while search engines keep ignoring it. The README's host configs are updated; existing sites change their own header rule to benefit.
