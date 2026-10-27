@@ -98,6 +98,7 @@ article .markdown header h1 {
 - **Build time.** `postBuild` walks the Docusaurus route tree and, for every route with a markdown source, writes a cleaned `.md` into the build directory and copies the doc's `img/` folders. Custom `routeBasePath`, versioned docs and i18n are handled through the route metadata, not by scanning the filesystem. Routes ending in `/` become `index.md`.
 - **Runtime.** The plugin's `Root` wrapper injects the dropdown into `article .markdown header` on pages under `docsPath`. The dropdown builds its links from the current URL, so no page data is needed.
 - **Assistant links.** Each row opens the assistant's new-chat URL with the prompt `Read from {url} so I can ask questions about it.` ChatGPT and Claude receive the `.md`; Gemini, Perplexity and Grok receive the HTML page URL. See [Options](#options) for why.
+- **Discoverability.** Every page that has a twin gets `<link rel="alternate" type="text/markdown" href="…">` in its built HTML, the convention Mintlify, Anthropic, Bun and Cloudflare docs use, and the build root gets an `llms.txt` listing every twin with its title (`/docs/llms.txt` on a `/docs/` site). Together with the per-bot header below, AI search crawlers can find and index the markdown while Google and Bing keep ignoring it.
 
 ## Options
 
@@ -108,6 +109,7 @@ module.exports = {
       docsPath: '/docs/',
       aiProviders: ['chatgpt', 'claude', 'gemini', 'perplexity', 'grok'],
       aiPrompt: 'Read from {url} so I can ask questions about it.',
+      llmsTxt: true,
     }],
   ],
 };
@@ -118,6 +120,7 @@ module.exports = {
 | `docsPath` | `'/docs/'` | URL prefix of the pages that get the dropdown. Use `'/'` for a docs-only site (`routeBasePath: '/'`). |
 | `aiProviders` | all five, in this order | Which assistant rows to show, in menu order. `[]` or `false` hides the rows. Accepts built-in ids and custom entries (below). |
 | `aiPrompt` | `'Read from {url} so I can ask questions about it.'` | The prompt the assistant receives. Must contain `{url}`. |
+| `llmsTxt` | `true` | Write `llms.txt` at the build root listing every twin. Set `false` if another plugin already generates one. |
 
 Invalid values fail `docusaurus build` with a message naming the option.
 
@@ -149,7 +152,7 @@ A custom entry has a `label`, a `url` template containing `{prompt}` (the URL-en
 
 ## Serving the .md files
 
-The build writes plain files, so any static host serves them. Two headers are worth setting: `Content-Type: text/plain` so browsers display rather than download, and `X-Robots-Tag: noindex, nofollow` so search engines do not index a second copy of every page. The AI assistants still fetch the files; only indexing is off.
+The build writes plain files, so any static host serves them. Two headers are worth setting: `Content-Type: text/plain` so browsers display rather than download, and a per-bot `X-Robots-Tag` that keeps Google, Bing and DuckDuckGo from indexing a second copy of every page while leaving AI search crawlers (PerplexityBot, OAI-SearchBot, ClaudeBot and the rest) free to index the markdown. A blanket `noindex, nofollow` would hide the twins from the AI search engines as well, which defeats the point; assistants that fetch a URL live are unaffected either way.
 
 <details>
 <summary>Vercel (<code>vercel.json</code>)</summary>
@@ -162,14 +165,14 @@ The build writes plain files, so any static host serves them. Two headers are wo
       "headers": [
         { "key": "Content-Type", "value": "text/plain; charset=utf-8" },
         { "key": "X-Content-Type-Options", "value": "nosniff" },
-        { "key": "X-Robots-Tag", "value": "noindex, nofollow" },
+        { "key": "X-Robots-Tag", "value": "googlebot: noindex, nofollow, bingbot: noindex, nofollow, duckduckbot: noindex, nofollow" },
         { "key": "Cache-Control", "value": "public, max-age=3600, must-revalidate" }
       ]
     },
     {
       "source": "/docs/(.*)/img/(.*)",
       "headers": [
-        { "key": "X-Robots-Tag", "value": "noindex, nofollow" },
+        { "key": "X-Robots-Tag", "value": "googlebot: noindex, nofollow, bingbot: noindex, nofollow, duckduckbot: noindex, nofollow" },
         { "key": "Cache-Control", "value": "public, max-age=86400, immutable" }
       ]
     }
@@ -187,13 +190,13 @@ The build writes plain files, so any static host serves them. Two headers are wo
   [headers.values]
     Content-Type = "text/plain; charset=utf-8"
     X-Content-Type-Options = "nosniff"
-    X-Robots-Tag = "noindex, nofollow"
+    X-Robots-Tag = "googlebot: noindex, nofollow, bingbot: noindex, nofollow, duckduckbot: noindex, nofollow"
     Cache-Control = "public, max-age=3600, must-revalidate"
 
 [[headers]]
   for = "/docs/*/img/*"
   [headers.values]
-    X-Robots-Tag = "noindex, nofollow"
+    X-Robots-Tag = "googlebot: noindex, nofollow, bingbot: noindex, nofollow, duckduckbot: noindex, nofollow"
     Cache-Control = "public, max-age=86400, immutable"
 ```
 </details>
@@ -205,11 +208,11 @@ The build writes plain files, so any static host serves them. Two headers are wo
 /*.md
   Content-Type: text/plain; charset=utf-8
   X-Content-Type-Options: nosniff
-  X-Robots-Tag: noindex, nofollow
+  X-Robots-Tag: googlebot: noindex, nofollow, bingbot: noindex, nofollow, duckduckbot: noindex, nofollow
   Cache-Control: public, max-age=3600, must-revalidate
 
 /docs/*/img/*
-  X-Robots-Tag: noindex, nofollow
+  X-Robots-Tag: googlebot: noindex, nofollow, bingbot: noindex, nofollow, duckduckbot: noindex, nofollow
   Cache-Control: public, max-age=86400, immutable
 ```
 </details>
@@ -221,12 +224,12 @@ The build writes plain files, so any static host serves them. Two headers are wo
 <FilesMatch "\\.md$">
   Header set Content-Type "text/plain; charset=utf-8"
   Header set X-Content-Type-Options "nosniff"
-  Header set X-Robots-Tag "noindex, nofollow"
+  Header set X-Robots-Tag "googlebot: noindex, nofollow, bingbot: noindex, nofollow, duckduckbot: noindex, nofollow"
   Header set Cache-Control "public, max-age=3600, must-revalidate"
 </FilesMatch>
 
 <LocationMatch "^/docs/.*/img/.*">
-  Header set X-Robots-Tag "noindex, nofollow"
+  Header set X-Robots-Tag "googlebot: noindex, nofollow, bingbot: noindex, nofollow, duckduckbot: noindex, nofollow"
   Header set Cache-Control "public, max-age=86400, immutable"
 </LocationMatch>
 ```
@@ -239,12 +242,12 @@ The build writes plain files, so any static host serves them. Two headers are wo
 location ~* \.md$ {
   add_header Content-Type "text/plain; charset=utf-8";
   add_header X-Content-Type-Options "nosniff";
-  add_header X-Robots-Tag "noindex, nofollow";
+  add_header X-Robots-Tag "googlebot: noindex, nofollow, bingbot: noindex, nofollow, duckduckbot: noindex, nofollow";
   add_header Cache-Control "public, max-age=3600, must-revalidate";
 }
 
 location ~* ^/docs/.*/img/.* {
-  add_header X-Robots-Tag "noindex, nofollow";
+  add_header X-Robots-Tag "googlebot: noindex, nofollow, bingbot: noindex, nofollow, duckduckbot: noindex, nofollow";
   add_header Cache-Control "public, max-age=86400, immutable";
 }
 ```

@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.0] - 2026-10-27
+
+### Added
+- **`<link rel="alternate" type="text/markdown" href="…">`** is inserted into the built HTML of every page that has a markdown twin, the convention Mintlify, Anthropic, Bun and Cloudflare docs use to advertise markdown to crawlers. Only pages with a twin get it, it is idempotent, and nothing is added to the client bundle.
+- **`llms.txt`** at the build root (`/docs/llms.txt` on a `/docs/` site) listing every twin with its title (front matter `title`, else the first heading). New `llmsTxt: false` option disables it for sites that generate their own.
+
+### Changed
+- The recommended `X-Robots-Tag` for `.md` files is now per-bot (`googlebot`, `bingbot` and `duckduckbot` get `noindex, nofollow`) instead of a blanket `noindex`, so AI search crawlers such as PerplexityBot and OAI-SearchBot can index the markdown while search engines keep ignoring it. The README's host configs are updated; existing sites change their own header rule to benefit.
+
 ## [2.3.2] - 2026-10-27
 
 ### Changed
@@ -199,6 +208,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Compatible with Docusaurus v3.x
 - Uses React 18's createRoot API for component injection
 
+[2.4.0]: https://github.com/FlyNumber/markdown_docusaurus_plugin/releases/tag/v2.4.0
 [2.3.2]: https://github.com/FlyNumber/markdown_docusaurus_plugin/releases/tag/v2.3.2
 [2.3.1]: https://github.com/FlyNumber/markdown_docusaurus_plugin/releases/tag/v2.3.1
 [2.3.0]: https://github.com/FlyNumber/markdown_docusaurus_plugin/releases/tag/v2.3.0

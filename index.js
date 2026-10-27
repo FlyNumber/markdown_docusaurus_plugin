@@ -1,9 +1,11 @@
 const fs = require('fs-extra');
 const path = require('path');
-const { getMarkdownUrl } = require('./lib/markdown-path');
+const { getMarkdownUrl, getHtmlOutputPath } = require('./lib/markdown-path');
 const { cleanMarkdownForDisplay } = require('./lib/clean-markdown');
 const { recordImgMapping } = require('./lib/img-mapping');
 const { normalizeAiOptions } = require('./lib/ai-providers');
+const { insertAlternateLink } = require('./lib/html-head');
+const { extractTitle, renderLlmsTxt } = require('./lib/llms-txt');
 
 /**
  * Docusaurus plugin to copy raw markdown files to build output
@@ -55,8 +57,11 @@ module.exports = function markdownSourcePlugin(context, options = {}) {
       });
     },
 
-    async postBuild({ outDir, routes, baseUrl }) {
+    async postBuild({ outDir, routes, baseUrl, siteConfig }) {
       console.log('[markdown-source-plugin] Processing markdown source files...');
+
+      const config = siteConfig || context.siteConfig || {};
+      const siteUrl = String(config.url || '').replace(/\/$/, '');
 
       // Flatten nested routes and filter to markdown sources
       const allRoutes = flattenRoutes(routes);
@@ -68,6 +73,8 @@ module.exports = function markdownSourcePlugin(context, options = {}) {
       console.log(`[markdown-source-plugin] Found ${mdRoutes.length} markdown routes`);
 
       let copiedCount = 0;
+      let linkedCount = 0;
+      const llmsEntries = []; // { title, url } per twin, in route order
       const imgDirsToCopy = new Map(); // sourceImgDir -> Set<destImgDir>
 
       for (const route of mdRoutes) {
@@ -93,6 +100,21 @@ module.exports = function markdownSourcePlugin(context, options = {}) {
           await fs.writeFile(destPath, cleanedContent, 'utf8');
           copiedCount++;
           console.log(`  ✓ Processed: ${sourceRelPath} → ${buildRelPath}`);
+
+          // Advertise the twin: <link rel="alternate" type="text/markdown"> in the
+          // page's built HTML, and an entry for llms.txt.
+          const absoluteMdUrl = siteUrl + fetchUrl;
+          llmsEntries.push({ title: extractTitle(content, route.path), url: absoluteMdUrl });
+          const htmlRelPath = stripBaseUrl(getHtmlOutputPath(route.path, config.trailingSlash), baseUrl);
+          const htmlPath = path.join(outDir, htmlRelPath);
+          if (await fs.pathExists(htmlPath)) {
+            const html = await fs.readFile(htmlPath, 'utf8');
+            const linked = insertAlternateLink(html, absoluteMdUrl);
+            if (linked !== html) {
+              await fs.writeFile(htmlPath, linked, 'utf8');
+              linkedCount++;
+            }
+          }
         } catch (error) {
           console.error(`  ✗ Failed to process ${sourceRelPath}:`, error.message);
         }
@@ -107,6 +129,17 @@ module.exports = function markdownSourcePlugin(context, options = {}) {
       }
 
       console.log(`[markdown-source-plugin] Successfully processed ${copiedCount} markdown files`);
+      console.log(`[markdown-source-plugin] Added <link rel="alternate" type="text/markdown"> to ${linkedCount} pages`);
+
+      if (options.llmsTxt !== false) {
+        const llmsPath = path.join(outDir, 'llms.txt');
+        await fs.writeFile(
+          llmsPath,
+          renderLlmsTxt({ title: config.title || 'Documentation', tagline: config.tagline, entries: llmsEntries }),
+          'utf8'
+        );
+        console.log(`[markdown-source-plugin] Wrote llms.txt with ${llmsEntries.length} entries`);
+      }
 
       // Copy image directories. Each source dir may have multiple destinations.
       console.log('[markdown-source-plugin] Copying image directories...');
@@ -143,6 +176,9 @@ function validateOptions({ options = {} }) {
   }
   normalizeDocsPath(options.docsPath);
   normalizeAiOptions(options);
+  if (options.llmsTxt !== undefined && typeof options.llmsTxt !== 'boolean') {
+    throw new Error(`[markdown-source-plugin] llmsTxt must be true or false, got ${JSON.stringify(options.llmsTxt)}.`);
+  }
   return { ...options, id };
 }
 
