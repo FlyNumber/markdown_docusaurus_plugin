@@ -39,7 +39,7 @@ test('contentLoaded: publishes normalized docsPath, aiProviders and aiPrompt', a
   assert.equal(data.docsPath, '/guides/');
   assert.deepEqual(data.aiProviders.map(p => p.id), ['claude', 'custom-1']);
   assert.equal(data.aiProviders[0].context, 'markdown');
-  assert.equal(data.aiPrompt, 'Read {url} so I can ask questions about it.');
+  assert.equal(data.aiPrompt, 'Read from {url} so I can ask questions about it.');
   assert.deepEqual(JSON.parse(JSON.stringify(data)), data);
 });
 

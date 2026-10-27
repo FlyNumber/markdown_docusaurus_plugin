@@ -424,7 +424,7 @@ module.exports = {
   plugins: [
     ['docusaurus-markdown-source-plugin', {
       aiProviders: ['chatgpt', 'claude', 'gemini', 'perplexity', 'grok'], // default; order is the menu order
-      aiPrompt: 'Read {url} so I can ask questions about it.',           // default; must contain {url}
+      aiPrompt: 'Read from {url} so I can ask questions about it.',      // default; must contain {url}
     }],
   ],
 };
@@ -435,10 +435,10 @@ module.exports = {
 | `chatgpt` | Open in ChatGPT | HTML page URL |
 | `claude` | Open in Claude | Markdown `.md` URL |
 | `gemini` | Open in Gemini | HTML page URL |
-| `perplexity` | Open in Perplexity | Markdown `.md` URL |
+| `perplexity` | Open in Perplexity | HTML page URL |
 | `grok` | Open in Grok | HTML page URL |
 
-**Why not the `.md` URL everywhere?** ChatGPT rejects `.md` links in a prefilled prompt, so it gets the HTML page plus a hint to browse the web. Claude and Perplexity are handed the clean markdown this plugin generates, the better input and the convention Bun's and Mintlify's docs use. Grok is given the HTML page as the safe choice. "Open in Gemini" opens Google's AI Mode (a Gemini-powered Search experience) because gemini.google.com has no way to prefill a prompt from a link.
+**Why not the `.md` URL everywhere?** Most assistants answer a prompt like this from their search index or reject `.md` links outright: ChatGPT refuses them in a prefilled prompt, and Perplexity answers from its index, which never contains the `.md` twins because the headers recommended below mark them `noindex`. Those assistants get the HTML page, which they already index, and ChatGPT additionally gets a hint to browse the web. Claude fetches the URL you give it live, so it is handed the clean markdown this plugin generates, the convention Mintlify, Bun and PostHog docs follow. Grok is given the HTML page as the safe choice. "Open in Gemini" opens Google's AI Mode (a Gemini-powered Search experience) because gemini.google.com has no way to prefill a prompt from a link.
 
 **The assistant fetches the page itself.** The prompt only contains a link, built from the browser's current origin. The site must be publicly reachable: on `localhost`, on deploy previews behind authentication, or on private sites the assistant cannot read the page. Whether a given assistant actually retrieves the page is up to that assistant. Claude requires sign-in; Grok asks the reader to confirm the pre-filled message before sending; Google and Perplexity may show a bot check to automated browsers.
 

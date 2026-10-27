@@ -44,16 +44,18 @@ The trigger follows the disclosure pattern rather than announcing a menu it does
 | `chatgpt` | Open in ChatGPT | `https://chatgpt.com/?hints=search&q={prompt}` | HTML page URL |
 | `claude` | Open in Claude | `https://claude.ai/new?q={prompt}` | markdown URL |
 | `gemini` | Open in Gemini | `https://www.google.com/search?udm=50&q={prompt}` | HTML page URL |
-| `perplexity` | Open in Perplexity | `https://www.perplexity.ai/search/new?q={prompt}` | markdown URL |
+| `perplexity` | Open in Perplexity | `https://www.perplexity.ai/search/new?q={prompt}` | HTML page URL |
 | `grok` | Open in Grok | `https://grok.com/?q={prompt}` | HTML page URL |
 
-Why the split: ChatGPT rejects `.md` URLs in a prefilled prompt (Neon and Bun both link it to the HTML page; `hints=search` makes it browse rather than answer from memory). Google's Gemini web app has no prefill parameter, so "Open in Gemini" opens Google AI Mode, which is Gemini-powered and reads the HTML page; the README says so. Claude and Perplexity are known to accept the clean markdown URL, which is the whole point of the plugin, so they get it. Grok has no evidence either way, so it gets the HTML page URL, the safe choice.
+Why the split: ChatGPT rejects `.md` URLs in a prefilled prompt (Neon and Bun both link it to the HTML page; `hints=search` makes it browse rather than answer from memory). Google's Gemini web app has no prefill parameter, so "Open in Gemini" opens Google AI Mode, which is Gemini-powered and reads the HTML page; the README says so. Claude fetches a user-supplied URL live and accepts the clean markdown URL, which is the whole point of the plugin, so it gets it (Mintlify, Bun and PostHog do the same). Grok has no evidence either way, so it gets the HTML page URL, the safe choice.
+
+Perplexity, revised 2026-10-27: the owner's own test showed Perplexity answering from its search index and reporting the `.md` twin "couldn't be retrieved"; the twins are `noindex` by this plugin's recommended headers, so they are never in that index. Mintlify still sends Perplexity the `.md`, but the evidence here wins: Perplexity gets the HTML page URL. The peer survey of 2026-10-27 (twelve docs sites) also fixed the default prompt wording to the de-facto standard "Read from {url} so I can ask questions about it."
 
 Icons come from `@lobehub/icons-static-svg` 1.101.0 (MIT), which has consistent 24x24 `currentColor` marks for all five. The path data is inlined; the package is not a dependency.
 
 ### Prompt
 
-Default: `Read {url} so I can ask questions about it.` The only placeholder is `{url}`; it resolves per assistant to the page or markdown URL as in the table. The prompt is URL-encoded with `encodeURIComponent` before substitution into `{prompt}`.
+Default: `Read from {url} so I can ask questions about it.` The only placeholder is `{url}`; it resolves per assistant to the page or markdown URL as in the table. The prompt is URL-encoded with `encodeURIComponent` before substitution into `{prompt}`.
 
 Page URL is `window.location.origin + window.location.pathname` at render time. Markdown URL is `origin + getMarkdownUrl(pathname)`, the same helper the existing rows use.
 
@@ -63,7 +65,7 @@ Page URL is `window.location.origin + window.location.pathname` at render time. 
 ['docusaurus-markdown-source-plugin', {
   docsPath: '/docs/',                       // unchanged
   aiProviders: ['chatgpt', 'claude', 'gemini', 'perplexity', 'grok'],   // default: all five, this order
-  aiPrompt: 'Read {url} so I can ask questions about it.',       // default
+  aiPrompt: 'Read from {url} so I can ask questions about it.',  // default
 }]
 ```
 

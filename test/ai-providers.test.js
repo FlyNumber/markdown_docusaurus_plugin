@@ -3,12 +3,14 @@ const assert = require('node:assert/strict');
 const { BUILT_IN_PROVIDERS, DEFAULT_PROMPT, normalizeAiOptions, buildAiLinks, resolveContextUrls } = require('../lib/ai-providers');
 
 const IDS = ['chatgpt', 'claude', 'gemini', 'perplexity', 'grok'];
-const promptFor = url => `Read ${url} so I can ask questions about it.`;
+const promptFor = url => `Read from ${url} so I can ask questions about it.`;
 const qOf = href => new URL(href).searchParams.get('q');
 
 test('built-in table: five ids in spec order with context split', () => {
   assert.deepEqual(BUILT_IN_PROVIDERS.map(p => p.id), IDS);
-  assert.deepEqual(BUILT_IN_PROVIDERS.map(p => p.context), ['page', 'markdown', 'page', 'markdown', 'page']);
+  // Only Claude receives the .md twin: ChatGPT rejects .md links, Perplexity failed to
+  // retrieve the noindexed twin in the owner's own test, Gemini/Grok get the safe choice.
+  assert.deepEqual(BUILT_IN_PROVIDERS.map(p => p.context), ['page', 'markdown', 'page', 'page', 'page']);
   for (const p of BUILT_IN_PROVIDERS) assert.ok(p.url.includes('{prompt}'), p.id);
   assert.equal(BUILT_IN_PROVIDERS[0].url, 'https://chatgpt.com/?hints=search&q={prompt}');
   assert.equal(BUILT_IN_PROVIDERS[1].url, 'https://claude.ai/new?q={prompt}');
@@ -21,7 +23,7 @@ test('normalize: undefined gives all built-ins and the default prompt', () => {
   const out = normalizeAiOptions({});
   assert.deepEqual(out.aiProviders.map(p => p.id), IDS);
   assert.equal(out.aiPrompt, DEFAULT_PROMPT);
-  assert.equal(DEFAULT_PROMPT, 'Read {url} so I can ask questions about it.');
+  assert.equal(DEFAULT_PROMPT, 'Read from {url} so I can ask questions about it.');
 });
 
 test('normalize: subset and reorder are honoured; built-ins are copies', () => {
@@ -101,7 +103,7 @@ test('buildAiLinks: each built-in gets its context URL inside the prompt, read b
   assert.equal(new URL(byId.claude).pathname, '/new');
   assert.equal(qOf(byId.gemini), promptFor(ctx.pageUrl));
   assert.equal(new URL(byId.gemini).searchParams.get('udm'), '50');
-  assert.equal(qOf(byId.perplexity), promptFor(ctx.markdownUrl));
+  assert.equal(qOf(byId.perplexity), promptFor(ctx.pageUrl));
   assert.equal(new URL(byId.perplexity).pathname, '/search/new');
   assert.equal(qOf(byId.grok), promptFor(ctx.pageUrl));
   assert.deepEqual(links.map(l => l.label), ['Open in ChatGPT', 'Open in Claude', 'Open in Gemini', 'Open in Perplexity', 'Open in Grok']);
